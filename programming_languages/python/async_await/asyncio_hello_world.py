@@ -114,6 +114,10 @@ loop = asyncio.get_event_loop()
 loop.create_task(main_async())
 loop.run_forever()
 
+# what is a thread / a process for the OS / python / rust
+
+# the really tricky thing is: we can actually use asyncio to run several OS threds / use different CPU / run
+# python multiprocessing in parallel...
 # import asyncio
 # from concurrent.futures import ProcessPoolExecutor
 #
