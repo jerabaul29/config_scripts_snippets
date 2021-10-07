@@ -98,14 +98,18 @@ async def main_async():
 # await main_async
 
 # this will run the async function without problem: we explicitly ask asyncio to run tasks for us
+# once this is done, the script will finish
 # asyncio.run(main_async())
 
 # this is another way to do the same; this makes it clear that there is actually an asyncio "loop" running,
 # that keeps checking for which async task can be performed every time an await is hit.
+# once this is done, the script will finish
 # loop = asyncio.get_event_loop()
 # loop.run_until_complete(main_async())
 
-# we can also force this loop to run forever: this will never return
+# we can also force this asyncio loop to run forever: this script will then never finish, the asyncio loop will keep trying
+# to find some async work to do, even if there is none; this is "like" the old way of having a main event loop looking for
+# tasks / callbacks / work to do, again and again.
 loop = asyncio.get_event_loop()
 loop.create_task(main_async())
 loop.run_forever()
