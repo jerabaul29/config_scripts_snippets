@@ -111,6 +111,12 @@ async def main_async() -> NoReturn:
 # the line under cannot be run: cannot await outside of async bloc or asyncio executor
 # await main_async
 
+# There are different kinds of executors, based on threads or processes; the default executor (if not specified) will be
+# a concurrent.futures.ThreadPoolExecutor with some default settings; due to the Python GIL, this poses some limitations
+# (the GIL means, that for a given Python process, only one given thread can execute code at a time). There are other
+# executors available (based on processes in particular), this is discussed in the asyncio_process_pool_executor examples.
+# For now, let's use the default thread pool executor, and not care too much about the GIL :) .
+
 # this will run the async function without problem: we explicitly ask asyncio to run tasks for us
 # once this is done, the script will finish
 asyncio.run(main_async())
