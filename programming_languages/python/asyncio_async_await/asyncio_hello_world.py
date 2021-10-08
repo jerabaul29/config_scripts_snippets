@@ -3,6 +3,7 @@ import asyncio
 from typing import NoReturn
 
 """A small hello world for asyncio async await
+
 The idea here is to show "how to think about async await". I like to have the following mental model:
 - in Python, "usual" async await allows to get concurrency within a single thread; i.e., switch between different slow
 tasks (when we know that something is slow and that we may do something else in the meantime), using only 1 CPU on the
@@ -20,10 +21,19 @@ an await keyword, if the corresponding function call is not ready yet, the async
 for / jump to other async tasks and spend time on these
 -- be CAREFUL not to use non-async (i.e. blocking) slow functions when trying to formulate some async code: these do not get
 awaited and cannot give time for the runner to do anything else asyncronously.
+
+The async keyword "adds some syntaxic sugar to make this function return a future".
+The await keyword says to the asyncio executor to "feel free to attend other futures, somewhere else in the code, while this thing
+resolves and gets ready". In practise, when an await function call is hit, the async executor is free to jump to another await
+call and process it while the first call is resolving, before coming back to the initial await location.
+The program will not progress past a given await call before it is fully resolved, but may do some other useful tasks (like, resolving
+other awaits), while waiting for the initial await call to resolve.
+
+So the whole async / await system is here to make it easier to work with futures that are used under the hood.
 """
 
 
-def print_hello():
+def print_hello() -> NoReturn:
     """A non async hello world function cannot be called with an await
     keyword."""
     time.sleep(0.5)
@@ -50,7 +60,7 @@ async def slow_function(input: int, time_start: float) -> int:
     return input
 
 
-async def main_async():
+async def main_async() -> NoReturn:
     time_start = time.time()
 
     print(f"*** start scheduling some slow functions, elapsed: {time.time()-time_start}s")
@@ -69,6 +79,10 @@ async def main_async():
     # we await a function without any await on awaitable call within itself, so there will not be ways for the asyncio runner
     # to look at other tasks and we get no gains
     await async_print_hello(time_start)
+
+    # calling an async function directly without scheduling it as a task or awaiting it is an error and the corresponding
+    # function will never get executed
+    # slow_function(5, time_start)
 
     # we never hit an await where we actually had something to await for until now, and will not look for executing other
     # tasks until we do so; for example, this will not let us do any progress on our async tasks for now
@@ -99,7 +113,7 @@ async def main_async():
 
 # this will run the async function without problem: we explicitly ask asyncio to run tasks for us
 # once this is done, the script will finish
-# asyncio.run(main_async())
+asyncio.run(main_async())
 
 # this is another way to do the same; this makes it clear that there is actually an asyncio "loop" running,
 # that keeps checking for which async task can be performed every time an await is hit.
@@ -110,36 +124,7 @@ async def main_async():
 # we can also force this asyncio loop to run forever: this script will then never finish, the asyncio loop will keep trying
 # to find some async work to do, even if there is none; this is "like" the old way of having a main event loop looking for
 # tasks / callbacks / work to do, again and again.
-loop = asyncio.get_event_loop()
-loop.create_task(main_async())
-loop.run_forever()
+# loop = asyncio.get_event_loop()
+# loop.create_task(main_async())
+# loop.run_forever()
 
-# what is a thread / a process for the OS / python / rust
-
-# the really tricky thing is: we can actually use asyncio to run several OS threds / use different CPU / run
-# python multiprocessing in parallel...
-# import asyncio
-# from concurrent.futures import ProcessPoolExecutor
-#
-# print('running async test')
-#
-# def say_boo():
-#     i = 0
-#     while True:
-#         print('...boo {0}'.format(i))
-#         i += 1
-#
-#
-# def say_baa():
-#     i = 0
-#     while True:
-#         print('...baa {0}'.format(i))
-#         i += 1
-#
-# if __name__ == "__main__":
-#     executor = ProcessPoolExecutor(2)
-#     loop = asyncio.get_event_loop()
-#     boo = loop.run_in_executor(executor, say_boo)
-#     baa = loop.run_in_executor(executor, say_baa)
-#
-#     loop.run_forever()
