@@ -28,6 +28,9 @@ resolves and gets ready". In practise, when an await function call is hit, the a
 call and process it while the first call is resolving, before coming back to the initial await location.
 The program will not progress past a given await call before it is fully resolved, but may do some other useful tasks (like, resolving
 other awaits), while waiting for the initial await call to resolve.
+Be sure to hit the await keyword often, and that all potentially lenghty calls are behind an await.
+The async await model of python is well adapted for concurrency, ie code with slow io / network / database access, but not for cpu
+intensive tasks.
 
 So the whole async / await system is here to make it easier to work with futures that are used under the hood.
 """
