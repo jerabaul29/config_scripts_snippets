@@ -1,9 +1,16 @@
 #!/bin/bash
 
 ##############################################
+# DESCRIPTION
 # A little script to check if the laptop should be switched off to save the battery
 #   - checks if the battery is discharging
 #   - if the battery is less than a threshold, shutdown
+
+##############################################
+# USE
+# to only source, for example for using the functions by themselves:
+# source script_shutdown_low_battery.sh --source-only
+# to execute: just run the script, making sure to have sudo rights
 
 ##############################################
 # SETUP
@@ -24,24 +31,25 @@
 # NOTES
 #
 # There are several ways to get information about the battery status and level. Looks like which one works best may depend on the system used.
-# 
-# upower method:
+#
+# upower method (probably the best method on modern gnome based systems, though a bit harder to parse):
 # - to enumerate the sources of information:
 # $ upower -e
 # - to get information about a device
 # $ upower -i /org/freedesktop/UPower/devices/battery_BAT0
-# 
+#
 # acpi method:
 # installed with:
 # sudo apt install acpi
 # apt-get install acpitool
 # ... does not give much on my system
-# 
-# looking at the syst data, which are present as files in:
+#
+# looking at the syst data, which are present as files in (lower level that may be the most robust):
 # /sys/class/power_supply/BAT0
-# does not give the status (cable or not)
-# 
-# So, on MY specific system, I end up using a upower based method for getting the status of the battery, and the sys info for the percentage
+# /sys/class/power_supply/AC
+# this also gives a lot of information
+#
+# the best method to implement may depend on your machine
 
 ##############################################
 # sounder programming environment            
@@ -61,9 +69,27 @@ set -o nounset
 # return error code 0 if no bug
 function get_status
 {
-    STATUS="$(upower -i /org/freedesktop/UPower/devices/battery_BAT0 | grep -E state: | xargs | cut -d' ' -f2 | sed s/%//)"
-    echo "$STATUS"
-    return 0
+    # a upower based method to get the status
+    # STATUS="$(upower -i /org/freedesktop/UPower/devices/battery_BAT0 | grep -E state: | xargs | cut -d' ' -f2 | sed s/%//)"
+    # echo "$STATUS"
+    # return 0
+
+    # a sys info file method to get the status
+    STATUS="$(cat /sys/class/power_supply/AC/online)"
+    case "${STATUS}" in
+        "1")
+            echo "charging"
+            ;;
+
+        "0")
+            echo "discharging"
+            ;;
+
+        *)
+            echo -n "Unknown status: "
+            echo "${STATUS}"
+            ;;
+    esac
 }
 
 # a function to get the battery level
@@ -80,33 +106,38 @@ function get_level
 # if the battery is discharging, and the level is too low, shutdown
 # to be able to shutdown, this should be performed as root
 # log this to a file, keeping only the last output (i.e., erase on write)
-{
-    date
-    CRRT_STATUS="$(get_status)"
+# we only use this if we execute the script, pass any argument (for example, --source-only to be be clear with intent) to not execute
+if [[ $# -eq 0 ]] ; then
 
-    case "$CRRT_STATUS" in
-        "discharging")
-            echo -n "discharging: "
+    {
+        date
+        CRRT_STATUS="$(get_status)"
 
-            CRRT_LEVEL="$(get_level)"
-            echo "${CRRT_LEVEL} percents"
+        case "$CRRT_STATUS" in
+            "discharging")
+                echo -n "discharging: "
 
-            if [[ "$CRRT_LEVEL" -lt 25 ]]
-            then
-                echo "need to shutdown, low battery"
-                sudo shutdown now
-            fi
-            ;;
+                CRRT_LEVEL="$(get_level)"
+                echo "${CRRT_LEVEL} percents"
 
-        "charging")
-            echo "charging"
-            ;;
+                if [[ "$CRRT_LEVEL" -lt 25 ]]
+                then
+                    echo "need to shutdown, low battery"
+                    sudo shutdown now
+                fi
+                ;;
 
-        *)
-            echo -n "Unknown status: "
-            echo "${CRRT_STATUS}"
-            ;;
-    esac
-} >| /var/log/script_shutdown_low_battery 2>&1
-# NOTE: to perform some dry run and test, may need to use another location if not working as root
-# } >| /home/jr/Desktop/Current/test_script_shutdown_battery/script_shutdown_low_battery 2>&1
+            "charging")
+                echo "charging"
+                ;;
+
+            *)
+                echo -n "Unknown status: "
+                echo "${CRRT_STATUS}"
+                ;;
+        esac
+    } >| /var/log/script_shutdown_low_battery 2>&1
+    # NOTE: to perform some dry run and test, may need to use another location if not working as root
+    # } >| /home/jr/Desktop/Current/test_script_shutdown_battery/script_shutdown_low_battery 2>&1
+
+fi
