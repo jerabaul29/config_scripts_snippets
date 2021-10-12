@@ -52,7 +52,7 @@
 # the best method to implement may depend on your machine
 
 ##############################################
-# sounder programming environment            
+# sounder programming environment
 # exit if a command fails
 set -o errexit
 # make sure to show the error code of the first failing command
@@ -66,7 +66,6 @@ set -o nounset
 
 # a function to get the battery status
 # should be either charging or discharging
-# return error code 0 if no bug
 function get_status
 {
     # a upower based method to get the status
@@ -76,6 +75,7 @@ function get_status
 
     # a sys info file method to get the status
     STATUS="$(cat /sys/class/power_supply/AC/online)"
+
     case "${STATUS}" in
         "1")
             echo "charging"
@@ -90,11 +90,12 @@ function get_status
             echo "${STATUS}"
             ;;
     esac
+
+    return 0
 }
 
 # a function to get the battery level
 # should be a number between 0% and 100%
-# return error code 0 if no bug
 function get_level
 {
     LEVEL="$(cat /sys/class/power_supply/BAT0/capacity)"
@@ -110,7 +111,9 @@ function get_level
 if [[ $# -eq 0 ]] ; then
 
     {
+        # let's print the date to make it easy to inspect log output
         date
+
         CRRT_STATUS="$(get_status)"
 
         case "$CRRT_STATUS" in
@@ -132,7 +135,7 @@ if [[ $# -eq 0 ]] ; then
                 ;;
 
             *)
-                echo -n "Unknown status: "
+                echo -n "ERROR: Unknown status: "
                 echo "${CRRT_STATUS}"
                 ;;
         esac
