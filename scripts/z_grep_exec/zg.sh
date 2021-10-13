@@ -32,7 +32,7 @@ function zg(){
     local -r PATH_TO_SAVELAST="${HOME}/.last_zg_output"
 
     # read
-    local OUTPUT="$(cat ${PATH_Z_DATABASE} | cut -f 1 -d "|")"
+    local OUTPUT="$(cat "${PATH_Z_DATABASE}" | cut -f 1 -d "|")"
 
     # do the grepping
     local COLORED="${OUTPUT}"
@@ -43,8 +43,8 @@ function zg(){
       shift
     done
 
-    local OUTPUT="$(echo "${OUTPUT}" | awk '{printf("% 4d  %s\n", NR, $0)}')"
-    local COLORED="$(echo "${COLORED}" | awk '{printf("% 4d  %s\n", NR, $0)}')"
+    OUTPUT="$(echo "${OUTPUT}" | awk '{printf("% 4d  %s\n", NR, $0)}')"
+    COLORED="$(echo "${COLORED}" | awk '{printf("% 4d  %s\n", NR, $0)}')"
 
     echo "${COLORED}"
 

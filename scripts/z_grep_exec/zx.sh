@@ -24,9 +24,9 @@ function zx() {
 
     local -r PATH_TO_SAVELAST="${HOME}/.last_zg_output"
 
-    local -r SELECTED_COMMAND="cd $(head -$1 ${PATH_TO_SAVELAST} | tail -1 | cut -c 7-)"
+    local -r SELECTED_COMMAND="cd \"$(head -"$1" "${PATH_TO_SAVELAST}" | tail -1 | cut -c 7-)\""
     echo "${SELECTED_COMMAND}"
-    eval ${SELECTED_COMMAND}
+    eval "${SELECTED_COMMAND}"
     
     return 0
 }
