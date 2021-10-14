@@ -7,11 +7,16 @@ function hx() {
     echo "ex : histx 4"
     return
   fi
+  
+  if [[ "$1" == "-v" ]]; then
+        echo "v2.0"
+        return 0
+  fi
 
-  # TODO: automate how to set the PATH_TO_SAVELAST and share it with histx
-  PATH_TO_SAVELAST="/home/jrlab/Desktop/Git/MyBashScripts/Data/last_histg_output"
+  local -r PATH_TO_SAVELAST="${HOME}/.last_hg_output"
 
-  SELECTED_COMMAND="$(head -$1 ${PATH_TO_SAVELAST} | tail -1 | tr -s ' ' | awk '{$1=$1;print}' | cut -d ' ' -f 2-)"
+  local -r SELECTED_COMMAND="$(head "-$1" "${PATH_TO_SAVELAST}" | tail -1 | tr -s ' ' | awk '{$1=$1;print}' | cut -d ' ' -f 2-)"
   echo "${SELECTED_COMMAND}"
-  eval ${SELECTED_COMMAND}
+  eval "${SELECTED_COMMAND}"
 }
+
