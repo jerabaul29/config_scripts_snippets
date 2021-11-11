@@ -1,5 +1,6 @@
 # in bash, it is possible to use variables with defaults. This is just an illustration of this:
 
+# IceCream for bash can be obtained at: https://github.com/jtplaarj/IceCream-Bash
 source "${HOME}/Desktop/Git/IceCream-Bash/src/ic.sh"
 
 FOO_1="${VARIABLE_1:-default_1}"  # If variable not set or null, use default.
