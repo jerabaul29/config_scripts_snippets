@@ -8,7 +8,7 @@ function sha256check
     if [[ "$1" == "-h" ]]; then
         echo "A bash function to check sha256 integrity of a single file."
         echo "use: sha256check PATH_TO_FILE EXPECTED_SHA256"
-        echo "ex: sha256check 3a48c6e5bfcf1f3d50d908bdbcd776555dbab437d65b39673bfffa70af07da02 besseggen.jpg"
+        echo "ex: sha256check besseggen.jpg 3a48c6e5bfcf1f3d50d908bdbcd776555dbab437d65b39673bfffa70af07da02"
         return 0
     fi
 
