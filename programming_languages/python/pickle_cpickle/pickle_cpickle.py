@@ -81,7 +81,9 @@ ic(object_to_retrieve)
 def cpkl_load_or_generate(factory):
     def cpkled_factory(*args, **kwargs):
         # generate a reasonable path where to save the cpkl file
+        # if you want it to be usable across files, just remove the caller_filename
         caller_filename = inspect.stack()[1].filename[:-3]
+        caller_filename = ""
         factory_name = factory.__name__
         str_list_args = []
         for crrt_arg in args:
@@ -116,3 +118,6 @@ result = another_factory(3, 4)
 ic(result)
 result = another_factory(3, 4)
 ic(result)
+
+# note: joblib is also an option, with memory.cache, but possibly more complex, less easy to move betwee
+# machines etc
