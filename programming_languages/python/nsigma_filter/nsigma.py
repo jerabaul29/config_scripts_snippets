@@ -30,7 +30,7 @@ def sliding_filter_nsigma(np_array_in, nsigma=3.0, side_half_width=5, skip_aroun
         mean = np.mean(crrt_array_data)
         std = np.std(crrt_array_data)
         if np.abs(np_array[crrt_middle_index] - mean) > nsigma * std:
-            np_array[crrt_middle_index] = mean  # we play a bit with fire: simply do a mean interpolation
+            np_array[crrt_middle_index] = mean  # we play a bit with fire: simply do a mean interpolation; could also put simply NaN
             list_filtered_indexes.append(crrt_middle_index)
 
     return np_array, list_filtered_indexes
