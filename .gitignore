@@ -3,6 +3,8 @@
 *.pkl
 *.cpkl
 
+__pycache__/
+
 *.swp
 *~
 
