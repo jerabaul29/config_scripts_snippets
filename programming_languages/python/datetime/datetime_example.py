@@ -45,3 +45,20 @@ ic(time_2.second)
 ic((time_2 - time_1).seconds)
 ic((time_2 - time_1).total_seconds())
 
+# ------------------------------------------------------------------------------------------
+# note that, even if the os environ is set as utc, if you want to safely change back
+# and forth between datetime and timestamp, you need to use the correct functions!
+
+# this works, but really, please, do not take the chance!!
+# some_utc = datetime.datetime(2022, 1, 1, 1, 1, 1)
+# this is safest!!
+some_utc = datetime.datetime(2022, 1, 1, 1, 1, 1, tzinfo=utc_timezone)
+ic(some_utc)
+timestamp = some_utc.timestamp()
+ic(timestamp)
+# some_utc_back = datetime.datetime.fromtimestamp(timestamp)
+# ic(some_utc_back)
+some_utc_back = datetime.datetime.utcfromtimestamp(timestamp)
+some_utc_back = utc_timezone.localize(some_utc_back)
+ic(some_utc_back)
+
