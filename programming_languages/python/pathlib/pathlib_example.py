@@ -26,3 +26,6 @@ ic(suffix_txt)
 crrt_is_file = (cwd / "pathlib_example.py").is_file()
 ic(crrt_is_file)
 
+crrt_filename = (cwd / "some_name.ext").name
+ic(crrt_filename)
+
