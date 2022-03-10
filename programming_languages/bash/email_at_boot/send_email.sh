@@ -13,5 +13,6 @@ shopt -s nullglob
 echo "prepare email..."
 bash prepare_email.sh
 echo "send email..."
-sendmail -F "RPi Backup H22" -f "rpi_backup_h22" jean.rblt@gmail.com < email_content.txt
+#sendmail -F "RPi Backup H22" -f "rpi_backup_h22" jean.rblt@gmail.com < email_content.txt
+/usr/sbin/sendmail -F "RPi Backup H22" -f "rpi_backup_h22" jean.rblt@gmail.com < email_content.txt
 echo "done!"
