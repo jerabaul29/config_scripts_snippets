@@ -20,7 +20,7 @@ echo "Automatic message from the H22 backup RPi4 after boot." >> "${EMAIL_FILENA
 echo "Connect to me to start and set up the backup!" >> "${EMAIL_FILENAME}"
 echo "" >> "${EMAIL_FILENAME}"
 echo "From nextbox S22 RPi:" >> "${EMAIL_FILENAME}"
-echo "eval \`ssh-agent -s" >> "${EMAIL_FILENAME}"
+echo "eval \"\$(ssh-agent -s)\"" >> "${EMAIL_FILENAME}"
 echo "ssh-add .ssh/id_rsa_nextbox_s22" >> "${EMAIL_FILENAME}"
 echo "ssh pi@localhost -p 8080 -o PreferredAuthentications=publickey" >> "${EMAIL_FILENAME}"
 echo "" >> "${EMAIL_FILENAME}"
