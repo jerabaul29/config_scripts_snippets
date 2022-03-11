@@ -22,7 +22,7 @@ echo "setup reverse ssh tunnel"
 # set up the reverse ssh tunnel
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_rsa__nextbox__ssh_forwarding_user_s22a
-ssh -NR 8080:localhost:22 ssh_forwarding_user_s22a@jjrfnextbox.dedyn.io -p 31483 -o PreferredAuthentications=publickey -v &
+ssh -NR 8080:localhost:22 ssh_forwarding_user_s22a@URL -p PORT_TO_WHICH_SSH_ON_ROUTER -o PreferredAuthentications=publickey -v &
 
 sleep 10
 echo "prepare email"
