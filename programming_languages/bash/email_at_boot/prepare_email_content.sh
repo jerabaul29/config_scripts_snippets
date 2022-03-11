@@ -16,6 +16,7 @@ EMAIL_FILENAME="email_content.txt"
 
 echo "Subject: H22 backup RPi4 boot" >> "${EMAIL_FILENAME}"
 echo "" >> "${EMAIL_FILENAME}"
+echo "IP $(curl ifconfig.me)" >> "${EMAIL_FILENAME}"
 echo "Automatic message from the H22 backup RPi4 after boot." >> "${EMAIL_FILENAME}"
 echo "Connect to me to start and set up the backup!" >> "${EMAIL_FILENAME}"
 echo "" >> "${EMAIL_FILENAME}"
