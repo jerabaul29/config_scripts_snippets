@@ -1,3 +1,4 @@
+pi@raspberrypi:~/Scripts $ cat prepare_and_send_email.sh 
 # exit if a command fails; to circumvent, can add specifically on commands that can fail safely: " || true "
 set -o errexit
 # make sure to show the error code of the first failing command
@@ -15,7 +16,7 @@ echo "sleep..."
 sleep 30
 
 # parameters for the script
-EMAIL_FILENAME="email_content.txt"
+EMAIL_FILENAME="/home/pi/Scripts/email_content.txt"
 
 echo "prepare the email content"
 
@@ -47,6 +48,7 @@ df -h >> "${EMAIL_FILENAME}"
 echo "send the email"
 
 # sent the email
-sendmail -F "RPi Backup H22" -f "noreply" jean.rblt@gmail.com < email_content.txt
+# TODO: fixme: this generates a few warnings around unqualified host name unknown
+sendmail -F "RPi Backup H22" -f "noreply" jean.rblt@gmail.com < ${EMAIL_FILENAME}
 
 echo "done"
