@@ -1,0 +1,13 @@
+root@raspberrypi:/etc/systemd/system# cat boot_email.service 
+[Unit]
+Description=Send informative email at boot
+After=network.target
+
+[Service]
+User=pi
+ExecStart=/bin/bash /home/pi/Scripts/prepare_and_send_email.sh
+Type=oneshot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
