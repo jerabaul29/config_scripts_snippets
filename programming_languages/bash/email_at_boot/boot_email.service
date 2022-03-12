@@ -1,4 +1,5 @@
-root@raspberrypi:/etc/systemd/system# cat boot_email.service 
+# root@raspberrypi:/etc/systemd/system# cat boot_email.service 
+
 [Unit]
 Description=Send informative email at boot
 After=network.target
