@@ -1,0 +1,16 @@
+# pi@raspberrypi:/etc/systemd/system $ cat tunnel.service 
+
+[Unit]
+Description=Maintain Reverse Tunnel
+After=network.target
+
+[Service]
+User=pi
+ExecStart=/bin/bash /home/pi/Scripts/start_tunnel.sh
+Type=simple
+Restart=always
+RestartSec=15
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target
