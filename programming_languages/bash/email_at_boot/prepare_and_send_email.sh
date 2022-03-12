@@ -1,4 +1,5 @@
-pi@raspberrypi:~/Scripts $ cat prepare_and_send_email.sh 
+# pi@raspberrypi:~/Scripts $ cat prepare_and_send_email.sh 
+
 # exit if a command fails; to circumvent, can add specifically on commands that can fail safely: " || true "
 set -o errexit
 # make sure to show the error code of the first failing command
