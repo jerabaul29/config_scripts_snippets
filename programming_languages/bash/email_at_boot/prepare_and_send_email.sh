@@ -19,6 +19,13 @@ sleep 30
 # parameters for the script
 EMAIL_FILENAME="/home/pi/Scripts/email_content.txt"
 
+echo "wait for network"
+
+while ! ping -c 1 -W 1 8.8.8.8; do
+    echo "Waiting for 8.8.8.8 - network interface might be down or network not available..."
+    sleep 300
+done
+
 echo "prepare the email content"
 
 # create an empty file
