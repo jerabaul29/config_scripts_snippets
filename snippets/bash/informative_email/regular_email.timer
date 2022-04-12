@@ -1,0 +1,14 @@
+# cat /etc/systemd/system/regular_email.timer
+
+[Unit]
+Description=Send informative email at boot and periodically after
+Requires=regular_email.service
+
+[Timer]
+Unit=regular_email.service
+OnBootSec=1m
+OnCalendar=*-*-* 03:00:00
+AccuracySec=5m
+
+[Install]
+WantedBy=timers.target

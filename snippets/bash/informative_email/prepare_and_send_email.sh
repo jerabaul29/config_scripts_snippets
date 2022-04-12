@@ -1,5 +1,7 @@
 # pi@raspberrypi:~/Scripts $ cat prepare_and_send_email.sh 
 
+##############################################
+
 # exit if a command fails; to circumvent, can add specifically on commands that can fail safely: " || true "
 set -o errexit
 # make sure to show the error code of the first failing command
@@ -12,12 +14,17 @@ set -o nounset
 # see " help shopt "; use the -u flag to unset (while -s is set)
 shopt -s nullglob
 
+##############################################
+
 # start by waiting a bit - make sure network gets good time to get up etc
 echo "sleep..."
 sleep 30
 
+##############################################
+
 # parameters for the script
-EMAIL_FILENAME="/home/pi/Scripts/email_content.txt"
+# path to the email file
+EMAIL_FILENAME=XX
 
 echo "wait for network"
 
@@ -31,32 +38,27 @@ echo "prepare the email content"
 # create an empty file
 >| "${EMAIL_FILENAME}"
 
-# subject
-echo "Subject: H22 backup RPi4 boot" >> "${EMAIL_FILENAME}"
+echo "From: some_email@gmail.com" >> "${EMAIL_FILENAME}"
+echo "To: some_email@gmail.com" >> "${EMAIL_FILENAME}"
+echo "Subject: SOME_RPI backup RPi4 status" >> "${EMAIL_FILENAME}"
 echo "" >> "${EMAIL_FILENAME}"
 
 # custom information
-echo "IP $(curl ifconfig.me)" >> "${EMAIL_FILENAME}"
-echo "Automatic message from the H22 backup RPi4 after boot." >> "${EMAIL_FILENAME}"
-echo "Connect to me to start and set up the backup!" >> "${EMAIL_FILENAME}"
-echo "" >> "${EMAIL_FILENAME}"
-
-# how to connect over ssh
-echo "From nextbox S22 RPi:" >> "${EMAIL_FILENAME}"
-echo "eval \"\$(ssh-agent -s)\"" >> "${EMAIL_FILENAME}"
-echo "ssh-add .ssh/id_rsa_nextbox_s22" >> "${EMAIL_FILENAME}"
-echo "ssh pi@localhost -p 8080 -o PreferredAuthentications=publickey" >> "${EMAIL_FILENAME}"
-echo "" >> "${EMAIL_FILENAME}"
-
+echo "IP: $(curl ifconfig.me)" >> "${EMAIL_FILENAME}"
 # information about the system
-date >> "${EMAIL_FILENAME}"
-echo "" >> "${EMAIL_FILENAME}"
+echo "current date: $(date)" >>  "${EMAIL_FILENAME}"
+echo "uptime: $(uptime)" >>  "${EMAIL_FILENAME}"
+echo "df -h output:" >> "${EMAIL_FILENAME}"
 df -h >> "${EMAIL_FILENAME}"
+echo "" >> "${EMAIL_FILENAME}"
+
+# add any information to the body of the email
+echo "SOME_INFORMATION" >> "${EMAIL_FILENAME}"
+echo "" >> "${EMAIL_FILENAME}"
 
 echo "send the email"
 
 # sent the email
-# TODO: fixme: this generates a few warnings around unqualified host name unknown
-sendmail -F "RPi Backup H22" -f "noreply" jean.rblt@gmail.com < ${EMAIL_FILENAME}
+sendmail some_email@gmail.com < ${EMAIL_FILENAME}
 
 echo "done"

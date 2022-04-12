@@ -18,3 +18,10 @@ ic(matlab_datenum)
 ic(matlab_datenum_to_datetime(matlab_datenum))
 ic(corresponding_datetime)
 assert matlab_datenum_to_datetime(matlab_datenum) == corresponding_datetime
+
+# on an array, do:
+import numpy as np
+
+vec_mdate_to_datetime = np.vectorize(matlab_datenum_to_datetime)
+ic(vec_mdate_to_datetime(np.array([738400.46097252, 738401.46097252])))
+
