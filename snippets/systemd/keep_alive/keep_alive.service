@@ -1,0 +1,16 @@
+[Unit]
+Description=Keep a service alive
+After=network.target
+
+[Service]
+User=WHO_SHOULD_EXECUTE
+ExecStart=/bin/bash TO_EXECUTE.sh
+# systemd considers the service to be started up immediately. The process must not fork.
+Type=simple
+# restart if it ends
+Restart=always
+# how long to wait before restarting
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target

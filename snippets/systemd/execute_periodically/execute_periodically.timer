@@ -1,0 +1,23 @@
+[Unit]
+Description=Execute something periodically
+Requires=SERVIC_TO_EXECUTE.service
+
+[Timer]
+Unit=SERVIC_TO_EXECUTE.service
+# can have several activations one after the other
+# when after boot
+OnBootSec=2h
+# when after last unit activation; this will activate "all the time"
+# OnUnitActiveSec=1m
+# when after timer activation; this will activate once when timer is started
+OnActiveSec=1m
+# format is: DayOfWeek Year-Month-Day Hour:Minute:Second
+# example: Mon,Tue,Wed *-*-* 05:00:00
+# example: *-*-12 01:00:00
+OnCalendar=*-*-* 03:00:00
+# When activated, it triggers the service immediately if it missed the last start time (option Persistent=true), for example due to the system being powered off
+Persistent=true
+AccuracySec=1m
+
+[Install]
+WantedBy=timers.target

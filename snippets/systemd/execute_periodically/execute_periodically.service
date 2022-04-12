@@ -1,0 +1,13 @@
+# this is NOT what should be enabled; should enable the .timer
+
+[Unit]
+Description=Execute something
+Wants=TIMER_NAME.timer
+
+[Service]
+User=WHO_SHOULD_RUN
+ExecStart=/bin/bash PATH_TO_SCRIPT.sh
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,18 @@
+# to put in: /etc/systemd/system
+
+# to just run once at boot, a short lived script, that we should wait until fully executed before continuing
+
+[Unit]
+Description=Run once at boot
+After=network.target
+
+[Service]
+User=WHO_SHOULD_RUN
+ExecStart=/bin/bash PATH_TO_SCRIPT_TO_RUN.sh
+# one-off tasks, short lived, should wait until executed before continuing on
+Type=oneshot
+# stay registered as active even after the script exited
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
