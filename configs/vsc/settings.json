@@ -1,0 +1,52 @@
+{
+    "python.pythonPath": "/usr/bin/python3",
+    "python.defaultInterpreterPath": "/usr/bin/python3",
+    "editor.rulers": [
+        72,
+        99,
+        164
+    ],
+    "editor.minimap.enabled": false,
+    "editor.lineNumbers": "relative",
+    "editor.renderWhitespace": "all",
+    "editor.wordWrap": "on",
+    "git.alwaysShowStagedChangesResourceGroup": true,
+    "terminal.integrated.profiles.linux": {
+        "tmux": {
+            "path": "/usr/bin/tmux",
+            "args": [
+                "new-session",
+                "-A",
+                "-s",
+                "vscode-${workspaceFolderBasename}"
+            ],
+        },
+    },
+    "terminal.integrated.defaultProfile.linux": "tmux",
+    {
+        "key": "ctrl+w ctrl+j",
+        "command": "workbench.action.focusBelowGroup",
+        "when": "terminalFocus"
+    },
+    {
+        "key": "ctrl+w l",
+        "command": "workbench.action.focusRightGroup",
+        "when": "terminalFocus"
+    },
+    {
+        "key": "ctrl+w h",
+        "command": "workbench.action.focusLeftGroup",
+        "when": "terminalFocus"
+    },
+    {
+        "key": "ctrl+w k",
+        "command": "workbench.action.focusAboveGroup",
+        "when": "terminalFocus"
+    },
+    {
+        "key": "ctrl+w j",
+        "command": "workbench.action.focusBelowGroup",
+        "when": "terminalFocus"
+    },
+}
+
