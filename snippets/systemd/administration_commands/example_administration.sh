@@ -1,5 +1,11 @@
 ##########
-# modifying unit files
+# creating and modifying unit files
+
+# a service unit defines what to run
+# a timer unit defines when to run the service unit
+# by convention, the timer unit starts another unit with the same name, i.e. foo.timer starts foo.service
+
+# file units are created and put in /etc/systemd/system
 
 # issue systemctl daemon-reload whenever you edit the unit files
 # This makes systemd reload all unit files and re-consider their
