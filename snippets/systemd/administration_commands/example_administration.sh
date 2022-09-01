@@ -1,5 +1,27 @@
 ##########
+# creating and modifying unit files
+
+# a service unit defines what to run
+# a timer unit defines when to run the service unit
+# by convention, the timer unit starts another unit with the same name, i.e. foo.timer starts foo.service
+
+# file units are created and put in /etc/systemd/system
+
+# issue systemctl daemon-reload whenever you edit the unit files
+# This makes systemd reload all unit files and re-consider their
+# dependencies because systemd caches these files somehow. So
+# whenever you change a unit file, this command is required. 
+sudo systemctl daemon-reload
+
+##########
 # systemctl commands
+
+# if only using a .service per ser, start / stop, enable / disable the service
+# if running a .service through a .timer, start / stop, enable / disable the timer, not the service
+# i.e. when using a timer to schedule the running of a serice, only enable and start the timer unit, not the service unit
+# systemctl enable/disable controls the behaviour when booting
+# systemctl start/stop controls the behaviour right now
+# enable does not imply start (neither does disable imply stop). This can be overriden with the --now switch.
 
 # start and stop are used to start and stop once, now; will not be active after next reboot
 # start the timer, not the service, if want to run the service periodically
