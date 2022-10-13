@@ -29,3 +29,5 @@ ic(crrt_is_file)
 crrt_filename = (cwd / "some_name.ext").name
 ic(crrt_filename)
 
+globbing = pathlib_path_to_folder.glob("some*globbing")
+

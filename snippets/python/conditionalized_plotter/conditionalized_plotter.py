@@ -128,6 +128,9 @@ if __name__ == "__main__":
 
     import pytz
 
+    print("NOTE: the example will only work on a computer with the MO Uppsala in situ data")
+    # TODO: fixme: generate a dummy example that works anyways
+
     utc_timezone = pytz.timezone("UTC")
     # reduced time span, to generate figures faster when "just" doing some testing
 

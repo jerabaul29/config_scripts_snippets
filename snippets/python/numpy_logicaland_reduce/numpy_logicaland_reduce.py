@@ -12,7 +12,7 @@ indexes_fit = np.logical_and.reduce(
     (
         some_array_1 < 8,
         some_array_2 == 0,
-        np.isfinite(some_array_3)
+        np.isfinite(some_array_3),
     )
 )
 
