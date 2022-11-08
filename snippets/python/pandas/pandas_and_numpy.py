@@ -12,6 +12,6 @@ dummy_array_df = pd.DataFrame(data=dummy_array, columns=["data"])
 ic(dummy_array_df)
 
 # convert from pandas to numpy
-dummy_array_back = dummy_array_df.to_numpy(dtype=np.float32)
+dummy_array_back = dummy_array_df.loc[:, "data"].to_numpy(dtype=np.float32)
 ic(dummy_array_back)
 
