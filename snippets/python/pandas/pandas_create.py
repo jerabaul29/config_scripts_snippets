@@ -9,7 +9,7 @@ ic.configureOutput(prefix="", outputFunction=print)
 # create an empty pandas and append entries to it
 
 # main pandas
-big_pandas = pd.DataFrame()
+big_pandas = pd.DataFrame(columns=["c0", "c1", "c2"])
 ic(big_pandas)
 
 # create a small pandas from numpy arrays
