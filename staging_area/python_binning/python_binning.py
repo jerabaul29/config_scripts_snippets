@@ -66,7 +66,7 @@ def bin_data(np_array_in: np.ndarray, nbr_bins: int) -> Tuple[np.ndarray, np.nda
     bin_limits = np.arange(val_min, val_max+bin_width/2.0, bin_width)
     bin_mids = (bin_limits[:-1] + bin_limits[1:]) / 2.0
 
-    array_bin_indexes = np.searchsorted(bin_limits, np_array_in, side="left")
+    array_bin_indexes = np.searchsorted(bin_limits, np_array_in, side="left") - 1
 
     return (bin_limits, bin_mids, array_bin_indexes)
 
