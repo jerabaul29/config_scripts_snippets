@@ -42,9 +42,15 @@ def self_probability_integral_transform(sample_array_in):
 
 ############################################################
 
-mvnorm = stats.multivariate_normal(mean=[0, 0], cov=[[1., 0.7],
-                                                     [0.7, 1.]])
-x = mvnorm.rvs(1000)
+if True:
+    mvnorm = stats.multivariate_normal(mean=[0, 0], cov=[[1., 0.7],
+                                                        [0.7, 1.]])
+
+if False:
+    mvnorm = stats.multivariate_normal(mean=[0, 0], cov=[[0.01, 0.0],
+                                                        [0.0, 0.01]])
+
+x = mvnorm.rvs(5000)
 
 ############################################################
 # vanilla jointplot by setting the x and y arrays explicitly
