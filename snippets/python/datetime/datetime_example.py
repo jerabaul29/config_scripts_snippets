@@ -11,7 +11,10 @@ from icecream import ic
 import datetime
 import pytz
 
+# pytz is likely more flexible
 utc_timezone = pytz.timezone("UTC")
+# there are also some datetime native timezones
+datetime_utc_timezone = datetime.timezone.utc
 
 ic.configureOutput(prefix="", outputFunction=print)
 
@@ -32,6 +35,13 @@ cet_timezone = pytz.timezone("CET")
 crrt_utc_as_cet = crrt_utc_tz_aware.astimezone(cet_timezone)
 ic(crrt_utc_as_cet)
 ic(crrt_utc_tz_aware)
+
+# for datetime utc timezones, need to use another way to apply it
+datetime_tz_unaware = datetime.datetime.utcnow()
+ic(datetime_tz_unaware)
+datetime_tz_aware = datetime_tz_unaware.replace(tzinfo=datetime_utc_timezone)
+ic(datetime_tz_unaware)  # still unaware
+ic(datetime_tz_aware)  # aware
 
 # ------------------------------------------------------------------------------------------
 # don t get confused: second is the second value of the datetime object or timedelta object;
