@@ -36,4 +36,5 @@ function jpr() {
 
     jupyter nbconvert --to script "$filename.$extension"
     python3 "$filename.py"
+    rm "$filename.py"
 }
