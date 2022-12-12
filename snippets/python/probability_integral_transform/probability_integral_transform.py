@@ -55,6 +55,8 @@ def get_linear_probability_integral_transforms(sample_array_in, minux_max=-1.0e3
         data; i.e.:
             backwards_transform: [0, 1] -> [domain of sample_array_in]
     """
+    # TODO: add a "random undersample": reduce the complexity of the fit by keeping "at most XX points"
+    #       and drop randomly indexes to match that max size if larger
 
     assert len(sample_array_in.shape) == 1
 
