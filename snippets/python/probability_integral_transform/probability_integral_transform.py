@@ -38,7 +38,7 @@ def self_probability_integral_transform(sample_array_in):
     return pit_transformed
 
 
-def get_linear_probability_integral_transforms(sample_array_in, minux_max=-1.0e37, plus_max=1.0e37):
+def get_linear_probability_integral_transforms(sample_array_in, minux_max=-1.0e37, plus_max=1.0e37, max_n_points=10000):
     """Given the sample_array_in empirical samples, get
     the linear transforms that fulfills the PIT theory,
     in the forward and backwards directions.
@@ -46,6 +46,8 @@ def get_linear_probability_integral_transforms(sample_array_in, minux_max=-1.0e3
     sample_array_in: numpy array, shape (n_samples, )
     minux_max: for learning the transform, the smallest value to be expected for sample_array_in
     plus_max: for learning the transform, the largest value to be expected for sample_array_in
+    max_n_points: max number of points to use in the linear interpolation; if the sample_array_in has
+        more than max_n_points, will remove randomly some of the points
 
     forward_transform: the linear transform to apply the PIT
         based on linear transformation of the data; i.e.:
@@ -55,10 +57,15 @@ def get_linear_probability_integral_transforms(sample_array_in, minux_max=-1.0e3
         data; i.e.:
             backwards_transform: [0, 1] -> [domain of sample_array_in]
     """
-    # TODO: add a "random undersample": reduce the complexity of the fit by keeping "at most XX points"
-    #       and drop randomly indexes to match that max size if larger
-
     assert len(sample_array_in.shape) == 1
+
+    if sample_array_in.shape[0] > max_n_points:
+        # shuffle randomly
+        permutation = np.random.permutation(np.arange(0, sample_array_in.shape[0]))
+        sample_array_in = sample_array_in[permutation]
+
+        # keep only the given number of points
+        sample_array_in = sample_array_in[:max_n_points]
 
     max_extremes = np.array([minux_max, plus_max])
     extended_samples_array_in = np.concatenate((sample_array_in, max_extremes))
@@ -83,7 +90,7 @@ def get_linear_probability_integral_transforms(sample_array_in, minux_max=-1.0e3
 
 if __name__ == '__main__':
     mu, sigma = 0, 0.1 # mean and standard deviation
-    s = np.random.normal(mu, sigma, 10000)
+    s = np.random.normal(mu, sigma, 1000000)
     forward_transform, backwards_transform = get_linear_probability_integral_transforms(s)
 
     plt.figure()
