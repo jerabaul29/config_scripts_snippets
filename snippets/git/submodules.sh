@@ -1,7 +1,6 @@
 - to start using submodules:
 
 ```
-git submodule init
 git submodule update --init --recursive
 ```
 
