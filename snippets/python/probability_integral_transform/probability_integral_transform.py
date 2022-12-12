@@ -38,7 +38,7 @@ def self_probability_integral_transform(sample_array_in):
     return pit_transformed
 
 
-def get_linear_probability_integral_transforms(sample_array_in, minux_max=-1.0e37, plus_max=1.0e37, max_n_points=10000):
+def get_linear_probability_integral_transforms(sample_array_in, minux_max=-1.0e37, plus_max=1.0e37, max_n_points=50000):
     """Given the sample_array_in empirical samples, get
     the linear transforms that fulfills the PIT theory,
     in the forward and backwards directions.
