@@ -10,7 +10,7 @@ function jpr() {
       echo "A bash script to:"
       echo "  - convert .ipynb jupyter notebook to .py python script"
       echo "  - run the .py"
-      echo "use: histg [ipynb notebook]"
+      echo "use: jpr [ipynb notebook]"
       echo "ex : jpr some_notebook.ipynb"
       return 0
     fi
