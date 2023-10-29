@@ -1,0 +1,20 @@
+theme = "dark_plus"
+
+[editor]
+line-number = "relative"
+mouse = false
+cursorline = true
+cursorcolumn = true
+bufferline = "always"
+
+[editor.soft-wrap]
+enable = true
+
+[editor.statusline]
+left = ["mode", "spinner"]
+center = ["file-name"]
+right = ["diagnostics", "selections", "position", "position-percentage", "file-encoding", "file-line-ending", "file-type"]
+separator = "│"
+mode.normal = "NOR"
+mode.insert = "INS"
+mode.select = "SEL"
