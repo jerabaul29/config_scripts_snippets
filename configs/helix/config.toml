@@ -18,3 +18,6 @@ separator = "│"
 mode.normal = "NOR"
 mode.insert = "INS"
 mode.select = "SEL"
+
+[keys.normal."space"]
+o = "file_picker_in_current_buffer_directory"
