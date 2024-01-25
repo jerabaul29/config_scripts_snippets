@@ -38,7 +38,10 @@ ic(np_datetime)
 print("")
 print("--- datetime from np timestamp")
 ic(utc_np)
+print(f"{utc_np = }")
+# do the conversion from np.timestamp to datetime.datetime
 datetime_from_np = datetime.datetime.utcfromtimestamp(int(utc_np)/1e9)
+# localize to UTC if you want a timezone aware
 datetime_from_np = utc_timezone.localize(datetime_from_np)
 ic(datetime_from_np)
 
