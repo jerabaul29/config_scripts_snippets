@@ -48,6 +48,7 @@ fi
 
 tmux split-window -h
 tmux send-keys -t 2 'eval "$(/home/jrmet/miniconda3/bin/conda shell.bash hook)" && conda activate myenv' C-m
+tmux send-keys -t 1 'eval "$(/home/jrmet/miniconda3/bin/conda shell.bash hook)" && conda activate myenv' C-m
 tmux send-keys -t 2 "ipython3" C-m
 tmux send-keys -t 1 "hlx" C-m
 tmux select-pane -t 1
