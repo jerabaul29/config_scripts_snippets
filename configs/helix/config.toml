@@ -7,7 +7,7 @@ cursorline = true
 cursorcolumn = true
 bufferline = "always"
 indent-guides.render = true
-rulers = [89, 120]
+rulers = [79, 120]
 
 [editor.soft-wrap]
 enable = true
