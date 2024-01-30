@@ -29,7 +29,7 @@ display-inlay-hints = true
 
 
 [keys.normal.'\']
-space = [''':pipe-to tmux load-buffer - \; paste-buffer -dpr -t '{top-right}' \; send-keys -t '{right-of}' Enter''']
+space = [''':pipe-to tmux load-buffer - \; paste-buffer -dpr -t '{top-right}' \; send-keys -t '{top-right}' Enter''']
 '\' = [''':sh tmux send-keys Q/# Space %% Enter O# Escape Escape Nvg.a BSpace BSpace Escape Escape \\ Space uuQ''']
 # the above is the quivalent of putting, in .tmux.conf: send-keys Q/#\s%%\rO#\e\eNvg.a\b\b\e\e\\\suuQ
 # for explanations, see: https://github.com/helix-editor/helix/issues/2806#issuecomment-1551801413
