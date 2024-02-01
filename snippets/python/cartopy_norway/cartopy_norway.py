@@ -30,12 +30,6 @@ proj = ccrs.LambertConformal(central_latitude=65.0,
                              central_longitude=15.0,
                              standard_parallels=(52.5, 75.0))
 
-# # ------------------------------------------------------------ 
-# # figure showing predictions
-# xr_input["downwards_solar_radiation_at_ground"].interp(time=time_to_plot, method="nearest").plot()
-# #
-# plt.show()
-
 scaling = 0.6
 plt.figure(figsize=(10*scaling, 12*scaling))
 ax = plt.axes(projection=proj)
