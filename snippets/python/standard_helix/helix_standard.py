@@ -4,7 +4,8 @@ exit()
 
 # %%
 
-ipython3 --pdb
+# ipython3 --pdb
+ipython3
 
 # %%
 
