@@ -14,13 +14,25 @@ shopt -s nullglob
 
 ###############################
 
+USE_FILE=false
+
 if [ $# -eq 0 ]; then
     # all good
     :
 elif [ $# -eq 1 ]; then
     if [ "$1" == "-h" ]; then
       echo "Usage:"
+      echo "  * hj          : open a repl compatible tmux + helix env in the current folder"
+      echo "  * hj FILENAME : open a repl compatible tmux + helix env in the current folder, opening FILENAME in helix"
+      echo "  * hj -h       : display this help"
       exit 0
+    else
+      if [ ! -f "$1" ]; then
+        echo "File $1 not found!"
+        exit 2
+      fi
+      USE_FILE=true
+      FILENAME="$1"
     fi
     # all good
     :
@@ -52,7 +64,11 @@ tmux send-keys -t 2 'eval "$(/home/jrmet/miniconda3/bin/conda shell.bash hook)" 
 tmux send-keys -t 1 'eval "$(/home/jrmet/miniconda3/bin/conda shell.bash hook)" && conda activate myenv' C-m
 tmux send-keys -t 3 'eval "$(/home/jrmet/miniconda3/bin/conda shell.bash hook)" && conda activate myenv' C-m
 tmux send-keys -t 2 "ipython3 --pdb" C-m
-tmux send-keys -t 1 "hlx" C-m
+if [ $USE_FILE = true ]; then
+  tmux send-keys -t 1 "hlx $FILENAME" C-m
+else
+  tmux send-keys -t 1 "hlx" C-m
+fi
 tmux select-pane -t 1
 
 tmux attach
