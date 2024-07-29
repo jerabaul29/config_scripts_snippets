@@ -8,6 +8,10 @@
 # I recommend to make available as the hj command by adding to your ~/.bashrc:
 # alias hj="~/Desktop/Git/config_scripts_snippets/scripts/helix_and_repl/helix_and_repl.sh"
 
+# for this to work best, I recommend that you use macros to be able to send code to jupyter: see e.g.:
+# https://github.com/jerabaul29/config_scripts_snippets/blob/4d1202e28ed028535e83956f2d5f12bc92110ff4/configs/helix/config.toml#L32-L33
+# and the discussion at: https://github.com/helix-editor/helix/issues/2806 .
+
 # exit if a command fails; to circumvent, can add specifically on commands that can fail safely: " || true "
 set -o errexit
 # make sure to show the error code of the first failing command
