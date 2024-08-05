@@ -9,7 +9,7 @@ ipython3
 
 # %%
 
-%reset -f
+# %reset -f
 
 # %%
 
