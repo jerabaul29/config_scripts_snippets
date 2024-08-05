@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def sliding_filter_nsigma(np_array_in, nsigma=3.0, side_half_width=5, skip_around=4):
+def sliding_filter_nsigma(np_array_in, nsigma=3.0, side_half_width=5, skip_around=2):
     """Perform a sliding filter, on points of indexes
     [idx-side_half_width-skip_around; idx-skip_around] + [idx+skip_around; idx+side_half_width+skip_around],
     to remove outliers. I.e.,
