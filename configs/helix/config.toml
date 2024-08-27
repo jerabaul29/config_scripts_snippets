@@ -8,6 +8,7 @@ cursorcolumn = true
 bufferline = "always"
 indent-guides.render = true
 rulers = [79, 120]
+end-of-line-diagnostics = "hint"
 
 [editor.soft-wrap]
 enable = true
