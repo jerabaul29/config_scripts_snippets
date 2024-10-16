@@ -80,9 +80,9 @@ tmux split-window -v
 # NOTE: adapt the path / conda env name if necessary
 # NOTE: the following pane numbers are for tmux set up with https://github.com/gpakosz/.tmux.git , i.e. tmux pane numbering starting at 1
 # for 0-indexed tmux panes (that is usually the default), reduce the indexes below by 1, i.e. 1->0 2->1 etc
-tmux send-keys -t 2 'eval "$(~/miniconda3/bin/conda shell.bash hook)" && conda activate myenv' C-m
-tmux send-keys -t 1 'eval "$(~/miniconda3/bin/conda shell.bash hook)" && conda activate myenv' C-m
-tmux send-keys -t 3 'eval "$(~/miniconda3/bin/conda shell.bash hook)" && conda activate myenv' C-m
+tmux send-keys -t 2 'eval "$(~/miniconda3/bin/conda shell.bash hook)" && conda activate dev' C-m
+tmux send-keys -t 1 'eval "$(~/miniconda3/bin/conda shell.bash hook)" && conda activate dev' C-m
+tmux send-keys -t 3 'eval "$(~/miniconda3/bin/conda shell.bash hook)" && conda activate dev' C-m
 
 # NOTE:
 # do you prefer to start ipython3 with the built in debugger enabled or not?
