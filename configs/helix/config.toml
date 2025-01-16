@@ -8,7 +8,7 @@ cursorcolumn = true
 bufferline = "always"
 indent-guides.render = true
 rulers = [79, 120]
-# end-of-line-diagnostics = "hint"
+end-of-line-diagnostics = "hint"
 
 [editor.soft-wrap]
 enable = true
@@ -22,12 +22,8 @@ mode.normal = "NOR"
 mode.insert = "INS"
 mode.select = "SEL"
 
-[keys.normal."space"]
-o = "file_picker_in_current_buffer_directory"
-
 [editor.lsp]
 display-inlay-hints = true
-
 
 [keys.normal.'\']
 space = [''':pipe-to tmux load-buffer - \; paste-buffer -dpr -t '{top-right}' \; send-keys -t '{top-right}' Enter''']
