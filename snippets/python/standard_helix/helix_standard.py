@@ -9,6 +9,10 @@ ipython3
 
 # %%
 
+from loguru import logger
+
+# %%
+
 # %reset -f
 
 # %%
