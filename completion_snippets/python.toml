@@ -1,0 +1,46 @@
+[[snippets]]
+prefix = "fs"
+body = 'f"$1"'
+description = "initialize a f-string"
+
+[[snippets]]
+prefix = "fsp"
+body = 'f"{$1 = }"'
+description = "initialize a f-string print of a variable"
+
+[[snippets]]
+prefix = "cm"
+body = "# $1"
+description = "start a comment"
+
+[[snippets]]
+prefix = "ic"
+body = """
+
+# %%
+
+$1"""
+description = "start an ipython cell"
+
+[[snippets]]
+prefix = "ipd"
+body = """
+# %%
+
+exit()
+
+# %%
+
+# ipython3 --pdb
+ipython3
+
+# %%
+
+from loguru import logger
+
+# %%
+
+$1
+
+# %%"""
+description = "default ipython setup"
