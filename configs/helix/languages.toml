@@ -161,6 +161,10 @@ LOG_FILE = "/tmp/completion.log"
 command = "harper-ls"
 args = ["--stdio"]
 
+[language-server.cspell]
+command = "cspell-lsp"
+args = ["--stdio", "--dictionary", "~/.config/harper-ls/dictionary.txt"]
+
 [language-server.ansible-language-server]
 command = "ansible-language-server"
 args = ["--stdio"]
@@ -286,7 +290,7 @@ block-comment-tokens = [
   { start = "/**", end = "*/" },
   { start = "/*!", end = "*/" },
 ]
-language-servers = [ "harper-ls", "scls", "rust-analyzer" ]
+language-servers = [ "cspell", "harper-ls", "scls", "rust-analyzer" ]
 indent = { tab-width = 4, unit = "    " }
 persistent-diagnostic-sources = ["rustc", "clippy"]
 
@@ -335,7 +339,7 @@ name = "sway"
 scope = "source.sway"
 injection-regex = "sway"
 file-types = ["sw"]
-language-servers = [ "harper-ls", "scls", "forc" ]
+language-servers = [ "cspell", "harper-ls", "scls", "forc" ]
 roots = ["Forc.toml", "Forc.lock"]
 indent = { tab-width = 4, unit = "    " }
 comment-token = "//"
@@ -350,7 +354,7 @@ scope = "source.toml"
 injection-regex = "toml"
 file-types = ["toml", { glob = "pdm.lock" }, { glob = "poetry.lock" }, { glob = "Cargo.lock" }, { glob = "uv.lock" }]
 comment-token = "#"
-language-servers = [ "harper-ls", "scls", "taplo" ]
+language-servers = [ "cspell", "harper-ls", "scls", "taplo" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -363,7 +367,7 @@ scope = "source.awk"
 injection-regex = "awk"
 file-types = ["awk", "gawk", "nawk", "mawk"]
 comment-token = "#"
-language-servers = [ "harper-ls", "scls", "awk-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "awk-language-server" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -375,7 +379,7 @@ name = "protobuf"
 scope = "source.proto"
 injection-regex = "proto"
 file-types = ["proto"]
-language-servers = [ "harper-ls", "scls", "bufls", "pbkit" ]
+language-servers = [ "cspell", "harper-ls", "scls", "bufls", "pbkit" ]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 2, unit = "  " }
@@ -406,7 +410,7 @@ file-types = ["ex", "exs", { glob = "mix.lock" }]
 shebangs = ["elixir"]
 roots = ["mix.exs", "mix.lock"]
 comment-token = "#"
-language-servers = [ "harper-ls", "scls", "elixir-ls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "elixir-ls" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -436,7 +440,7 @@ file-types = ["mint"]
 shebangs = []
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "mint" ]
+language-servers = [ "cspell", "harper-ls", "scls", "mint" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[language]]
@@ -445,7 +449,7 @@ scope = "source.mojo"
 roots = ["__init__.mojo"]
 injection-regex = "mojo"
 file-types = ["mojo", "🔥"]
-language-servers = [ "harper-ls", "scls", "mojo-lsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "mojo-lsp" ]
 comment-token = "#"
 indent = { tab-width = 4, unit = "    " }
 auto-format = true
@@ -507,7 +511,7 @@ file-types = [
   "ldtkl",
   { glob = ".swift-format" },
 ]
-language-servers = [ "harper-ls", "scls", "vscode-json-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "vscode-json-language-server" ]
 auto-format = true
 indent = { tab-width = 2, unit = "  " }
 
@@ -523,7 +527,7 @@ file-types = ["jsonc", { glob = "tsconfig.json" }]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 grammar = "json"
-language-servers = [ "harper-ls", "scls", "vscode-json-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "vscode-json-language-server" ]
 auto-format = true
 indent = { tab-width = 2, unit = "  " }
 
@@ -532,7 +536,7 @@ name = "json5"
 scope = "source.json5"
 injection-regex = "json5"
 file-types = ["json5"]
-language-servers = [ "harper-ls", "scls",]
+language-servers = [ "cspell", "harper-ls", "scls",]
 comment-token = "//"
 indent = { tab-width = 4, unit = "    " }
 # https://json5.org
@@ -548,7 +552,7 @@ injection-regex = "c"
 file-types = ["c"] # TODO: ["h"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "clangd" ]
+language-servers = [ "cspell", "harper-ls", "scls", "clangd" ]
 indent = { tab-width = 2, unit = "  " }
 
 [language.debugger]
@@ -585,7 +589,7 @@ injection-regex = "cpp"
 file-types = ["cc", "hh", "c++", "cpp", "hpp", "h", "ipp", "tpp", "cxx", "hxx", "ixx", "txx", "ino", "C", "H", "cu", "cuh", "cppm", "h++", "ii", "inl", { glob = ".hpp.in" }, { glob = ".h.in" }]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "clangd" ]
+language-servers = [ "cspell", "harper-ls", "scls", "clangd" ]
 indent = { tab-width = 2, unit = "  " }
 
 [language.debugger]
@@ -623,7 +627,7 @@ roots = ["shard.yml", "shard.lock"]
 comment-token = "#"
 indent = { tab-width = 2, unit = "  " }
 grammar = "ruby"
-language-servers = [ "harper-ls", "scls", "crystalline" ]
+language-servers = [ "cspell", "harper-ls", "scls", "crystalline" ]
 
 [[language]]
 name = "c-sharp"
@@ -634,7 +638,7 @@ roots = ["sln", "csproj"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 4, unit = "\t" }
-language-servers = [ "harper-ls", "scls", "omnisharp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "omnisharp" ]
 
 [language.debugger]
 name = "netcoredbg"
@@ -692,7 +696,7 @@ roots = ["go.work", "go.mod"]
 auto-format = true
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "gopls", "golangci-lint-lsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "gopls", "golangci-lint-lsp" ]
 # TODO: gopls needs utf-8 offsets?
 indent = { tab-width = 4, unit = "\t" }
 
@@ -744,7 +748,7 @@ injection-regex = "gomod"
 file-types = [{ glob = "go.mod" }]
 auto-format = true
 comment-token = "//"
-language-servers = [ "harper-ls", "scls", "gopls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "gopls" ]
 indent = { tab-width = 4, unit = "\t" }
 
 [[grammar]]
@@ -758,7 +762,7 @@ injection-regex = "gotmpl"
 file-types = ["gotmpl"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "gopls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "gopls" ]
 indent = { tab-width = 2, unit = " " }
 
 [[grammar]]
@@ -772,7 +776,7 @@ injection-regex = "gowork"
 file-types = [{ glob = "go.work" }]
 auto-format = true
 comment-token = "//"
-language-servers = [ "harper-ls", "scls", "gopls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "gopls" ]
 indent = { tab-width = 4, unit = "\t" }
 
 [[grammar]]
@@ -789,7 +793,7 @@ shebangs = ["node"]
 roots = [ "package.json" ]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "typescript-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "typescript-language-server" ]
 indent = { tab-width = 2, unit = "  " }
 
 [language.debugger]
@@ -817,7 +821,7 @@ file-types = ["jsx"]
 roots = [ "package.json" ]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "typescript-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "typescript-language-server" ]
 indent = { tab-width = 2, unit = "  " }
 grammar = "javascript"
 
@@ -831,7 +835,7 @@ shebangs = ["deno", "bun", "ts-node"]
 roots = [ "package.json", "tsconfig.json" ]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "typescript-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "typescript-language-server" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -848,7 +852,7 @@ roots = ["tspconfig.yaml"]
 auto-format = true
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "typespec" ]
+language-servers = [ "cspell", "harper-ls", "scls", "typespec" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -864,7 +868,7 @@ file-types = ["tsx"]
 roots = [ "package.json", "tsconfig.json" ]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "typescript-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "typescript-language-server" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -877,7 +881,7 @@ scope = "source.css"
 injection-regex = "css"
 file-types = ["css", "scss"]
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "vscode-css-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "vscode-css-language-server" ]
 auto-format = true
 indent = { tab-width = 2, unit = "  " }
 
@@ -891,7 +895,7 @@ scope = "source.scss"
 injection-regex = "scss"
 file-types = ["scss"]
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "vscode-css-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "vscode-css-language-server" ]
 auto-format = true
 indent = { tab-width = 2, unit = "  " }
 
@@ -905,7 +909,7 @@ scope = "text.html.basic"
 injection-regex = "html"
 file-types = ["html", "htm", "shtml", "xhtml", "xht", "jsp", "asp", "aspx", "jshtm", "volt", "rhtml", "cshtml"]
 block-comment-tokens = { start = "<!--", end = "-->" }
-language-servers = [ "harper-ls", "scls", "vscode-html-language-server", "superhtml" ]
+language-servers = [ "cspell", "harper-ls", "scls", "vscode-html-language-server", "superhtml" ]
 auto-format = true
 indent = { tab-width = 2, unit = "  " }
 
@@ -921,7 +925,7 @@ file-types = ["py", "pyi", "py3", "pyw", "ptl", "rpy", "cpy", "ipy", "pyt", { gl
 shebangs = ["python", "uv"]
 roots = ["pyproject.toml", "setup.py", "poetry.lock", "pyrightconfig.json"]
 comment-token = "#"
-language-servers = [ "harper-ls", "scls", "ruff", "jedi", "pylsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "ruff", "jedi", "pylsp" ]
 # TODO: pyls needs utf-8 offsets
 indent = { tab-width = 4, unit = "    " }
 
@@ -936,7 +940,7 @@ injection-regex = "nickel"
 file-types = ["ncl"]
 shebangs = []
 comment-token = "#"
-language-servers = [ "harper-ls", "scls", "nls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "nls" ]
 indent = { tab-width = 2, unit = "  " }
 
 [language.auto-pairs]
@@ -956,7 +960,7 @@ injection-regex = "nix"
 file-types = ["nix"]
 shebangs = []
 comment-token = "#"
-language-servers = [ "harper-ls", "scls", "nil", "nixd" ]
+language-servers = [ "cspell", "harper-ls", "scls", "nil", "nixd" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -1006,7 +1010,7 @@ file-types = [
 ]
 shebangs = ["ruby"]
 comment-token = "#"
-language-servers = [ "harper-ls", "scls", "solargraph" ]
+language-servers = [ "cspell", "harper-ls", "scls", "solargraph" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -1066,7 +1070,7 @@ file-types = [
 ]
 shebangs = ["sh", "bash", "dash", "zsh"]
 comment-token = "#"
-language-servers = [ "harper-ls", "scls", "bash-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "bash-language-server" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -1081,7 +1085,7 @@ file-types = ["php", "inc", "php4", "php5", "phtml", "ctp"]
 shebangs = ["php"]
 roots = ["composer.json", "index.php"]
 comment-token = "//"
-language-servers = [ "harper-ls", "scls", "intelephense" ]
+language-servers = [ "cspell", "harper-ls", "scls", "intelephense" ]
 indent = { tab-width = 4, unit = "    " }
 
 [[grammar]]
@@ -1129,7 +1133,7 @@ scope = "source.tex"
 injection-regex = "tex"
 file-types = ["tex", "sty", "cls", "Rd", "bbx", "cbx"]
 comment-token = "%"
-language-servers = [ "harper-ls", "scls", "texlab" ]
+language-servers = [ "cspell", "harper-ls", "scls", "texlab" ]
 indent = { tab-width = 4, unit = "\t" }
 
 [[grammar]]
@@ -1142,7 +1146,7 @@ scope = "source.bib"
 injection-regex = "bib"
 file-types = ["bib"]
 comment-token = "%"
-language-servers = [ "harper-ls", "scls", "texlab" ]
+language-servers = [ "cspell", "harper-ls", "scls", "texlab" ]
 indent = { tab-width = 4, unit = "\t" }
 auto-format = true
 
@@ -1171,7 +1175,7 @@ file-types = ["lean"]
 roots = [ "lakefile.lean" ]
 comment-token = "--"
 block-comment-tokens = { start = "/-", end = "-/" }
-language-servers = [ "harper-ls", "scls", "lean" ]
+language-servers = [ "cspell", "harper-ls", "scls", "lean" ]
 indent = { tab-width = 2, unit = "  " }
 rulers = [101]
 text-width = 100
@@ -1207,7 +1211,7 @@ shebangs = ["julia"]
 roots = ["Manifest.toml", "Project.toml"]
 comment-token = "#"
 block-comment-tokens = { start = "#=", end = "=#" }
-language-servers = [ "harper-ls", "scls", "julia" ]
+language-servers = [ "cspell", "harper-ls", "scls", "julia" ]
 indent = { tab-width = 4, unit = "    " }
 
 [[grammar]]
@@ -1220,7 +1224,7 @@ scope = "source.java"
 injection-regex = "java"
 file-types = ["java", "jav", "pde"]
 roots = ["pom.xml", "build.gradle", "build.gradle.kts"]
-language-servers = [ "harper-ls", "scls", "jdtls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "jdtls" ]
 indent = { tab-width = 2, unit = "  " }
 comment-tokens = ["//"]
 block-comment-tokens = { start = "/*", end = "*/" }
@@ -1273,7 +1277,7 @@ injection-regex = "ocaml"
 file-types = ["ml"]
 shebangs = ["ocaml", "ocamlrun", "ocamlscript"]
 block-comment-tokens = { start = "(*", end = "*)" }
-language-servers = [ "harper-ls", "scls", "ocamllsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "ocamllsp" ]
 indent = { tab-width = 2, unit = "  " }
 
 [language.auto-pairs]
@@ -1293,7 +1297,7 @@ file-types = ["mli"]
 shebangs = []
 block-comment-tokens = { start = "(*", end = "*)" }
 comment-token = "(**)"
-language-servers = [ "harper-ls", "scls", "ocamllsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "ocamllsp" ]
 indent = { tab-width = 2, unit = "  " }
 
 [language.auto-pairs]
@@ -1333,7 +1337,7 @@ roots = [".luarc.json", ".luacheckrc", ".stylua.toml", "selene.toml", ".git"]
 comment-token = "--"
 block-comment-tokens = { start = "--[[", end = "--]]" }
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "lua-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "lua-language-server" ]
 
 [[grammar]]
 name = "lua"
@@ -1351,7 +1355,7 @@ file-types = ["tl"]
 comment-tokens = "--"
 block-comment-tokens = { start = "--[[", end = "--]]" }
 roots = [ "tlconfig.lua" ]
-language-servers = [ "harper-ls", "scls", "teal-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "teal-language-server" ]
 
 [[language]]
 name = "svelte"
@@ -1359,7 +1363,7 @@ scope = "source.svelte"
 injection-regex = "svelte"
 file-types = ["svelte"]
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "svelteserver" ]
+language-servers = [ "cspell", "harper-ls", "scls", "svelteserver" ]
 
 [[grammar]]
 name = "svelte"
@@ -1373,7 +1377,7 @@ file-types = ["vue"]
 roots = ["package.json"]
 block-comment-tokens = { start = "<!--", end = "-->" }
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "vuels" ]
+language-servers = [ "cspell", "harper-ls", "scls", "vuels" ]
 
 [[grammar]]
 name = "vue"
@@ -1385,7 +1389,7 @@ scope = "source.yaml"
 file-types = ["yml", "yaml", { glob = ".prettierrc" }, { glob = ".clangd" }, { glob = ".clang-format" }, { glob = ".clang-tidy" }]
 comment-token = "#"
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "yaml-language-server", "ansible-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "yaml-language-server", "ansible-language-server" ]
 injection-regex = "yml|yaml"
 
 [[grammar]]
@@ -1409,7 +1413,7 @@ file-types = ["hs", "hs-boot", "hsc"]
 roots = ["Setup.hs", "stack.yaml", "cabal.project"]
 comment-token = "--"
 block-comment-tokens = { start = "{-", end = "-}" }
-language-servers = [ "harper-ls", "scls", "haskell-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "haskell-language-server" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -1435,7 +1439,7 @@ file-types = ["purs"]
 roots = ["spago.yaml", "spago.dhall", "bower.json"]
 comment-token = "--"
 block-comment-tokens = { start = "{-", end = "-}" }
-language-servers = [ "harper-ls", "scls", "purescript-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "purescript-language-server" ]
 indent = { tab-width = 2, unit = "  " }
 auto-format = true
 formatter = { command = "purs-tidy", args = ["format"] }
@@ -1452,7 +1456,7 @@ file-types = ["zig", "zon"]
 roots = ["build.zig"]
 auto-format = true
 comment-tokens = ["//", "///", "//!"]
-language-servers = [ "harper-ls", "scls", "zls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "zls" ]
 indent = { tab-width = 4, unit = "    " }
 formatter = { command = "zig" , args = ["fmt", "--stdin"] }
 
@@ -1490,7 +1494,7 @@ file-types = ["pl", "prolog"]
 shebangs = ["swipl"]
 comment-token = "%"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "swipl" ]
+language-servers = [ "cspell", "harper-ls", "scls", "swipl" ]
 
 [[language]]
 name = "tsq"
@@ -1498,7 +1502,7 @@ scope = "source.tsq"
 file-types = [{ glob = "queries/*.scm" }, { glob = "injections.scm" },  { glob = "highlights.scm" },  { glob = "indents.scm" },  { glob = "textobjects.scm" },  { glob = "locals.scm" },  { glob = "tags.scm" }]
 comment-token = ";"
 injection-regex = "tsq"
-language-servers = [ "harper-ls", "scls", "ts_query_ls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "ts_query_ls" ]
 grammar = "query"
 indent = { tab-width = 2, unit = "  " }
 
@@ -1518,7 +1522,7 @@ file-types = ["cmake", { glob = "CMakeLists.txt" }]
 comment-token = "#"
 block-comment-tokens = { start = "#[[", end = "]]" }
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "cmake-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "cmake-language-server" ]
 injection-regex = "cmake"
 
 [[grammar]]
@@ -1545,7 +1549,7 @@ file-types = ["glsl", "vert", "tesc", "tese", "geom", "frag", "comp" ]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 4, unit = "    " }
-language-servers = [ "harper-ls", "scls", "glsl_analyzer" ]
+language-servers = [ "cspell", "harper-ls", "scls", "glsl_analyzer" ]
 injection-regex = "glsl"
 
 [[grammar]]
@@ -1558,7 +1562,7 @@ scope = "source.perl"
 file-types = ["pl", "pm", "t", "psgi", "raku", "rakumod", "rakutest", "rakudoc", "nqp", "p6", "pl6", "pm6"]
 shebangs = ["perl"]
 comment-token = "#"
-language-servers = [ "harper-ls", "scls", "perlnavigator" ]
+language-servers = [ "cspell", "harper-ls", "scls", "perlnavigator" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -1583,7 +1587,7 @@ shebangs = ["racket"]
 comment-token = ";"
 indent = { tab-width = 2, unit = "  " }
 block-comment-tokens = { start = "#|", end = "|#" }
-language-servers = [ "harper-ls", "scls", "racket" ]
+language-servers = [ "cspell", "harper-ls", "scls", "racket" ]
 grammar = "scheme"
 
 [[language]]
@@ -1593,7 +1597,7 @@ file-types = ["lisp", "asd", "cl", "l", "lsp", "ny", "podsl", "sexp"]
 shebangs = ["lisp", "sbcl", "ccl", "clisp", "ecl"]
 comment-token = ";"
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "cl-lsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "cl-lsp" ]
 grammar = "scheme"
 
 [language.auto-pairs]
@@ -1618,7 +1622,7 @@ scope = "source.wgsl"
 file-types = ["wgsl"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "wgsl_analyzer" ]
+language-servers = [ "cspell", "harper-ls", "scls", "wgsl_analyzer" ]
 indent = { tab-width = 4, unit = "    " }
 
 [[grammar]]
@@ -1678,7 +1682,7 @@ scope = "source.md"
 injection-regex = "md|markdown"
 file-types = ["md", "livemd", "markdown", "mdx", "mkd", "mkdn", "mdwn", "mdown", "markdn", "mdtxt", "mdtext", "workbook", { glob = "PULLREQ_EDITMSG" }]
 roots = [".marksman.toml"]
-language-servers = [ "harper-ls", "scls", "marksman", "markdown-oxide" ]
+language-servers = [ "cspell", "harper-ls", "scls", "marksman", "markdown-oxide" ]
 indent = { tab-width = 2, unit = "  " }
 block-comment-tokens = { start = "<!--", end = "-->" }
 
@@ -1706,7 +1710,7 @@ auto-format = true
 # NOTE: comment  below is a fix for issue https://github.com/helix-editor/helix/issues/12566 until next release
 # comment-tokens = ["//", "///"]
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "dart" ]
+language-servers = [ "cspell", "harper-ls", "scls", "dart" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -1721,7 +1725,7 @@ file-types = ["scala", "sbt", "sc"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "metals" ]
+language-servers = [ "cspell", "harper-ls", "scls", "metals" ]
 
 [[grammar]]
 name = "scala"
@@ -1748,7 +1752,7 @@ file-types = [
 ]
 comment-token = "#"
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "docker-langserver" ]
+language-servers = [ "cspell", "harper-ls", "scls", "docker-langserver" ]
 
 [[grammar]]
 name = "dockerfile"
@@ -1758,7 +1762,7 @@ source = { git = "https://github.com/camdencheek/tree-sitter-dockerfile", rev = 
 name = "docker-compose"
 scope = "source.yaml.docker-compose"
 roots = ["docker-compose.yaml", "docker-compose.yml"]
-language-servers = [ "harper-ls", "scls", "docker-compose-langserver", "yaml-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "docker-compose-langserver", "yaml-language-server" ]
 file-types = [{ glob = "docker-compose.yaml" }, { glob = "docker-compose.yml" }]
 comment-token = "#"
 indent = { tab-width = 2, unit = "  " }
@@ -1852,7 +1856,7 @@ name = "graphql"
 scope = "source.graphql"
 injection-regex = "graphql"
 file-types = ["gql", "graphql", "graphqls"]
-language-servers = [ "harper-ls", "scls", "graphql-language-service" ]
+language-servers = [ "cspell", "harper-ls", "scls", "graphql-language-service" ]
 comment-token = "#"
 block-comment-tokens = { start = "\"\"\"", end = "\"\"\"" }
 indent = { tab-width = 2, unit = "  " }
@@ -1870,7 +1874,7 @@ roots = ["elm.json"]
 auto-format = true
 comment-token = "--"
 block-comment-tokens = { start = "{-", end = "-}" }
-language-servers = [ "harper-ls", "scls", "elm-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "elm-language-server" ]
 indent = { tab-width = 4, unit = "    " }
 
 [[grammar]]
@@ -1897,7 +1901,7 @@ roots = ["bsconfig.json"]
 auto-format = true
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "rescript-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "rescript-language-server" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -1913,7 +1917,7 @@ roots = ["rebar.config"]
 shebangs = ["escript"]
 comment-token = "%%"
 indent = { tab-width = 4, unit = "    " }
-language-servers = [ "harper-ls", "scls", "erlang-ls", "elp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "erlang-ls", "elp" ]
 
 [[grammar]]
 name = "erlang"
@@ -1927,7 +1931,7 @@ roots = ["settings.gradle", "settings.gradle.kts"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 4, unit = "    " }
-language-servers = [ "harper-ls", "scls", "kotlin-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "kotlin-language-server" ]
 
 [[grammar]]
 name = "kotlin"
@@ -1942,7 +1946,7 @@ file-types = ["hcl", "tf", "nomad"]
 comment-token = "#"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "terraform-ls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "terraform-ls" ]
 auto-format = true
 
 [[grammar]]
@@ -1957,7 +1961,7 @@ file-types = ["tfvars"]
 comment-token = "#"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "terraform-ls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "terraform-ls" ]
 auto-format = true
 grammar = "hcl"
 
@@ -1980,7 +1984,7 @@ file-types = ["sol"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 4, unit = "    " }
-language-servers = [ "harper-ls", "scls", "solc" ]
+language-servers = [ "cspell", "harper-ls", "scls", "solc" ]
 
 [[grammar]]
 name = "solidity"
@@ -1994,7 +1998,7 @@ file-types = ["gleam"]
 roots = ["gleam.toml"]
 comment-token = "//"
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "gleam" ]
+language-servers = [ "cspell", "harper-ls", "scls", "gleam" ]
 auto-format = true
 
 [[grammar]]
@@ -2021,7 +2025,7 @@ injection-regex = "robot"
 file-types = ["robot", "resource"]
 comment-token = "#"
 indent = { tab-width = 4, unit = " " }
-language-servers = [ "harper-ls", "scls", "robotframework_ls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "robotframework_ls" ]
 
 [[grammar]]
 name = "robot"
@@ -2035,7 +2039,7 @@ file-types = ["r", "R", { glob = ".Rprofile" }, { glob = "Rprofile.site" }, { gl
 shebangs = ["r", "R"]
 comment-token = "#"
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "r" ]
+language-servers = [ "cspell", "harper-ls", "scls", "r" ]
 
 [[grammar]]
 name = "r"
@@ -2050,7 +2054,7 @@ file-types = ["rmd", "Rmd"]
 indent = { tab-width = 2, unit = "  " }
 grammar = "markdown"
 block-comment-tokens = { start = "<!--", end = "-->" }
-language-servers = [ "harper-ls", "scls", "r" ]
+language-servers = [ "cspell", "harper-ls", "scls", "r" ]
 
 [[language]]
 name = "swift"
@@ -2061,7 +2065,7 @@ roots = [ "Package.swift" ]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 formatter = { command = "swift-format" }
-language-servers = [ "harper-ls", "scls", "sourcekit-lsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "sourcekit-lsp" ]
 
 [[grammar]]
 name = "swift"
@@ -2110,7 +2114,7 @@ file-types = ["heex"]
 roots = ["mix.exs", "mix.lock"]
 block-comment-tokens = { start = "<!--", end = "-->" }
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "elixir-ls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "elixir-ls" ]
 
 [[grammar]]
 name = "heex"
@@ -2168,7 +2172,7 @@ file-types = ["nu", "nuon"]
 shebangs = ["nu"]
 comment-token = "#"
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "nu-lsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "nu-lsp" ]
 
 [[grammar]]
 name = "nu"
@@ -2182,7 +2186,7 @@ file-types = ["vala", "vapi"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "vala-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "vala-language-server" ]
 
 [[grammar]]
 name = "vala"
@@ -2221,7 +2225,7 @@ file-types = ["cairo"]
 comment-token = "//"
 indent = { tab-width = 4, unit = "    " }
 # auto-format = true
-language-servers = [ "harper-ls", "scls", "cairo-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "cairo-language-server" ]
 
 [[grammar]]
 name = "cairo"
@@ -2246,7 +2250,7 @@ auto-format = true
 scope = "source.odin"
 file-types = ["odin"]
 roots = ["ols.json", "main.odin"]
-language-servers = [ "harper-ls", "scls", "ols" ]
+language-servers = [ "cspell", "harper-ls", "scls", "ols" ]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 4, unit = "\t" }
@@ -2286,7 +2290,7 @@ injection-regex = "meson"
 file-types = [{ glob = "meson.build" }, { glob = "meson.options" }, { glob = "meson_options.txt" }]
 comment-token = "#"
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "mesonlsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "mesonlsp" ]
 
 [[grammar]]
 name = "meson"
@@ -2327,7 +2331,7 @@ scope = "source.v"
 file-types = ["v", "vv", "vsh"]
 shebangs = ["v run"]
 roots = ["v.mod"]
-language-servers = [ "harper-ls", "scls", "vlang-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "vlang-language-server" ]
 auto-format = true
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
@@ -2343,7 +2347,7 @@ scope = "source.verilog"
 file-types = ["v", "vh", "sv", "svh"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "svlangserver" ]
+language-servers = [ "cspell", "harper-ls", "scls", "svlangserver" ]
 indent = { tab-width = 2, unit = "  " }
 injection-regex = "verilog"
 
@@ -2380,7 +2384,7 @@ injection-regex = "openscad"
 file-types = ["scad"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "openscad-lsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "openscad-lsp" ]
 indent = { tab-width = 2, unit = "\t" }
 
 [[grammar]]
@@ -2394,7 +2398,7 @@ injection-regex = "prisma"
 file-types = ["prisma"]
 roots = ["package.json"]
 comment-token = "//"
-language-servers = [ "harper-ls", "scls", "prisma-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "prisma-language-server" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -2408,7 +2412,7 @@ injection-regex = "(clojure|clj|edn|boot)"
 file-types = ["clj", "cljs", "cljc", "clje", "cljr", "cljx", "edn", "boot"]
 roots = ["project.clj", "build.boot", "deps.edn", "shadow-cljs.edn"]
 comment-token = ";"
-language-servers = [ "harper-ls", "scls", "clojure-lsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "clojure-lsp" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -2431,7 +2435,7 @@ shebangs = ["elvish"]
 file-types = ["elv"]
 comment-token = "#"
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "elvish" ]
+language-servers = [ "cspell", "harper-ls", "scls", "elvish" ]
 grammar = "elvish"
 
 [[grammar]]
@@ -2447,7 +2451,7 @@ shebangs = []
 comment-token = "--"
 block-comment-tokens = { start = "{-", end = "-}" }
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "idris2-lsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "idris2-lsp" ]
 
 [[language]]
 name = "fortran"
@@ -2457,7 +2461,7 @@ file-types = ["f", "for", "f90", "f95", "f03"]
 roots = ["fpm.toml"]
 comment-token = "!"
 indent = { tab-width = 4, unit = "    "}
-language-servers = [ "harper-ls", "scls", "fortls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "fortls" ]
 
 [[grammar]]
 name = "fortran"
@@ -2483,7 +2487,7 @@ file-types = ["dot"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 4, unit = "    " }
-language-servers = [ "harper-ls", "scls", "dot-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "dot-language-server" ]
 
 [[grammar]]
 name = "dot"
@@ -2497,7 +2501,7 @@ file-types = ["cue"]
 roots = ["cue.mod"]
 auto-format = true
 comment-token = "//"
-language-servers = [ "harper-ls", "scls", "cuelsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "cuelsp" ]
 indent = { tab-width = 4, unit = "\t" }
 formatter = { command = "cue", args = ["fmt", "-"] }
 
@@ -2513,7 +2517,7 @@ file-types = ["slint"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 4, unit = "    " }
-language-servers = [ "harper-ls", "scls", "slint-lsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "slint-lsp" ]
 
 [[grammar]]
 name = "slint"
@@ -2563,7 +2567,7 @@ file-types = ["pas", "pp", "inc", "lpr", "lfm"]
 comment-token = "//"
 block-comment-tokens = { start = "{", end = "}" }
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "pasls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "pasls" ]
 
 [[grammar]]
 name = "pascal"
@@ -2594,7 +2598,7 @@ roots = ["jsonnetfile.json"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "jsonnet-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "jsonnet-language-server" ]
 
 [[grammar]]
 name = "jsonnet"
@@ -2608,7 +2612,7 @@ file-types = ["adb", "ads"]
 roots = ["alire.toml"]
 comment-token = "--"
 indent = { tab-width = 3, unit = "   " }
-language-servers = [ "harper-ls", "scls", "ada-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "ada-language-server" ]
 
 
 [[grammar]]
@@ -2634,7 +2638,7 @@ injection-regex = "bass"
 file-types = ["bass"]
 comment-token = ";"
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "bass" ]
+language-servers = [ "cspell", "harper-ls", "scls", "bass" ]
 
 [[grammar]]
 name = "bass"
@@ -2670,7 +2674,7 @@ comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 injection-regex = "d"
 indent = { tab-width = 4, unit = "    "}
-language-servers = [ "harper-ls", "scls", "serve-d" ]
+language-servers = [ "cspell", "harper-ls", "scls", "serve-d" ]
 formatter = { command = "dfmt" }
 
 [[grammar]]
@@ -2891,7 +2895,7 @@ auto-format = true
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 2, unit = " "}
-language-servers = [ "harper-ls", "scls", "bicep-langserver" ]
+language-servers = [ "cspell", "harper-ls", "scls", "bicep-langserver" ]
 
 [[grammar]]
 name = "bicep"
@@ -2901,7 +2905,7 @@ source = { git = "https://github.com/tree-sitter-grammars/tree-sitter-bicep", re
 name = "qml"
 scope = "source.qml"
 file-types = ["qml"]
-language-servers = [ "harper-ls", "scls", "qmlls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "qmlls" ]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 4, unit = "    " }
@@ -2957,7 +2961,7 @@ file-types = ["dhall"]
 comment-token = "--"
 block-comment-tokens = { start = "{-", end = "-}" }
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "dhall-lsp-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "dhall-lsp-server" ]
 formatter = { command = "dhall" , args = ["format"] }
 
 [[grammar]]
@@ -3120,7 +3124,7 @@ file-types = ["smithy"]
 roots = ["smithy-build.json"]
 comment-token = "//"
 indent = { tab-width = 4, unit = "    " }
-language-servers = [ "harper-ls", "scls", "cs" ]
+language-servers = [ "cspell", "harper-ls", "scls", "cs" ]
 
 [[grammar]]
 name = "smithy"
@@ -3131,7 +3135,7 @@ name = "vhdl"
 scope = "source.vhdl"
 file-types = ["vhd", "vhdl"]
 comment-token = "--"
-language-servers = [ "harper-ls", "scls", "vhdl_ls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "vhdl_ls" ]
 indent = { tab-width = 2, unit = "  " }
 injection-regex = "vhdl"
 
@@ -3146,7 +3150,7 @@ injection-regex = "rego"
 file-types = ["rego"]
 auto-format = true
 comment-token = "#"
-language-servers = [ "harper-ls", "scls", "regols" ]
+language-servers = [ "cspell", "harper-ls", "scls", "regols" ]
 grammar = "rego"
 
 [[grammar]]
@@ -3162,7 +3166,7 @@ shebangs = []
 comment-token = "#"
 block-comment-tokens = { start = "#[", end = "]#" }
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "nimlangserver" ]
+language-servers = [ "cspell", "harper-ls", "scls", "nimlangserver" ]
 
 [language.auto-pairs]
 '(' = ')'
@@ -3182,7 +3186,7 @@ file-types = [ "cabal" ]
 roots = ["cabal.project", "Setup.hs"]
 indent = { tab-width = 2, unit = "  " }
 comment-token = "--"
-language-servers = [ "harper-ls", "scls", "haskell-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "haskell-language-server" ]
 
 [[language]]
 name = "hurl"
@@ -3202,7 +3206,7 @@ name = "markdoc"
 scope = "text.markdoc"
 block-comment-tokens = { start = "<!--", end = "-->" }
 file-types = ["mdoc"]
-language-servers = [ "harper-ls", "scls", "markdoc-ls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "markdoc-ls" ]
 
 [[grammar]]
 name = "markdoc"
@@ -3214,7 +3218,7 @@ scope = "source.cl"
 injection-regex = "(cl|opencl)"
 file-types = ["cl"]
 comment-token = "//"
-language-servers = [ "harper-ls", "scls", "clangd" ]
+language-servers = [ "cspell", "harper-ls", "scls", "clangd" ]
 
 [[grammar]]
 name = "opencl"
@@ -3255,7 +3259,7 @@ injection-regex = "blueprint"
 file-types = ["blp"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "blueprint-compiler" ]
+language-servers = [ "cspell", "harper-ls", "scls", "blueprint-compiler" ]
 indent = { tab-width = 4, unit = "    " }
 
 [[grammar]]
@@ -3268,7 +3272,7 @@ scope = "source.forth"
 injection-regex = "forth"
 file-types = ["fs", "forth", "fth", "4th"]
 comment-token = "\\"
-language-servers = [ "harper-ls", "scls", "forth-lsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "forth-lsp" ]
 indent = { tab-width = 3, unit = "   " }
 
 [[grammar]]
@@ -3285,7 +3289,7 @@ comment-token = "//"
 block-comment-tokens = { start = "(*", end = "*)" }
 indent = { tab-width = 4, unit = "    " }
 auto-format = true
-language-servers = [ "harper-ls", "scls", "fsharp-ls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "fsharp-ls" ]
 
 [[grammar]]
 name = "fsharp"
@@ -3319,7 +3323,7 @@ injection-regex = "typ(st)?"
 file-types = ["typst", "typ"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls", "tinymist", "typst-lsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "tinymist", "typst-lsp" ]
 indent = { tab-width = 2, unit = "  " }
 
 [language.auto-pairs]
@@ -3374,7 +3378,7 @@ scope = "source.jq"
 injection-regex = "jq"
 file-types = ["jq"]
 comment-token = "#"
-language-servers = [ "harper-ls", "scls", "jq-lsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "jq-lsp" ]
 indent = { tab-width = 2, unit = "  " }
 
 [[grammar]]
@@ -3450,7 +3454,7 @@ injection-regex = "agda"
 file-types = ["agda"]
 roots = []
 comment-token = "--"
-# language-servers = [ "harper-ls", "scls", "als" ]
+# language-servers = [ "cspell", "harper-ls", "scls", "als" ]
 # the agda language server is of questionable functionality.
 auto-format = false
 indent = { tab-width = 2, unit = "  " }
@@ -3476,7 +3480,7 @@ file-types = ["templ"]
 roots = ["go.work", "go.mod"]
 comment-token = "//"
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "templ" ]
+language-servers = [ "cspell", "harper-ls", "scls", "templ" ]
 
 [[grammar]]
 name = "templ"
@@ -3496,7 +3500,7 @@ source = { git = "https://github.com/dynamotn/tree-sitter-dbml", rev = "2e2fa564
 
 [[language]]
 name = "bitbake"
-language-servers = [ "harper-ls", "scls", "bitbake-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "bitbake-language-server" ]
 scope = "source.bitbake"
 file-types = ["bb", "bbappend", "bbclass", {glob = "conf/*.conf" }, {glob = "conf/*/*.{inc,conf}" }, { glob = "recipe-*/*/*.inc" }]
 comment-token = "#"
@@ -3549,7 +3553,7 @@ injection-regex = "koka"
 file-types = ["kk"]
 comment-token = "//"
 indent = { tab-width = 8, unit = "  " }
-language-servers = [ "harper-ls", "scls", "koka" ]
+language-servers = [ "cspell", "harper-ls", "scls", "koka" ]
 
 [[grammar]]
 name = "koka"
@@ -3649,7 +3653,7 @@ roots = ["hyprland.conf"]
 file-types = [ { glob = "hypr/*.conf" }]
 comment-token = "#"
 grammar = "hyprlang"
-language-servers = [ "harper-ls", "scls", "hyprls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "hyprls" ]
 
 [[grammar]]
 name = "hyprlang"
@@ -3685,7 +3689,7 @@ scope = "source.bash"
 file-types = [{ glob = "PKGBUILD" }]
 comment-token = "#"
 grammar = "bash"
-language-servers = [ "harper-ls", "scls",
+language-servers = [ "cspell", "harper-ls", "scls",
   "pkgbuild-language-server",
   { except-features = [
     "diagnostics",
@@ -3698,7 +3702,7 @@ grammar = "gotmpl"
 scope = "source.helm"
 roots = ["Chart.yaml"]
 comment-token = "#"
-language-servers = [ "harper-ls", "scls", "helm_ls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "helm_ls" ]
 file-types = [ { glob = "templates/*.yaml" }, { glob = "templates/*.yml" }, { glob = "templates/_*.tpl"}, { glob = "templates/NOTES.txt" } ]
 
 [[language]]
@@ -3709,7 +3713,7 @@ file-types = [{ glob = "{app,addon}/{components,templates}/*.hbs" }]
 block-comment-tokens = { start = "{{!", end = "}}" }
 roots = ["package.json", "ember-cli-build.js"]
 grammar = "glimmer"
-language-servers = [ "harper-ls", "scls", "ember-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "ember-language-server" ]
 formatter = { command = "prettier", args = ['--parser', 'glimmer'] }
 
 [language.auto-pairs]
@@ -3755,7 +3759,7 @@ file-types = [
 ]
 comment-token = "#"
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "earthlyls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "earthlyls" ]
 
 [[grammar]]
 name = "earthfile"
@@ -3809,7 +3813,7 @@ roots = ["Move.toml"]
 file-types = ["move"]
 comment-token = "//"
 indent = { tab-width = 4, unit = "    " }
-language-servers = [ "harper-ls", "scls",]
+language-servers = [ "cspell", "harper-ls", "scls",]
 
 [[grammar]]
 name = "move"
@@ -3823,7 +3827,7 @@ file-types = ["pest"]
 comment-tokens = ["//", "///", "//!"]
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 4, unit = "    " }
-language-servers = [ "harper-ls", "scls", "pest-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "pest-language-server" ]
 
 [language.auto-pairs]
 '(' = ')'
@@ -3856,7 +3860,7 @@ file-types = ["gjs"]
 roots = ["package.json", "ember-cli-build.js"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls",
+language-servers = [ "cspell", "harper-ls", "scls",
     { except-features = [
         "format", "diagnostics",
     ], name = "typescript-language-server" },
@@ -3880,7 +3884,7 @@ file-types = ["gts"]
 roots = ["package.json", "ember-cli-build.js"]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
-language-servers = [ "harper-ls", "scls",
+language-servers = [ "cspell", "harper-ls", "scls",
     { except-features = [
         "format", "diagnostics",
     ], name = "typescript-language-server" },
@@ -3929,7 +3933,7 @@ roots            = ["package.json"]
 comment-tokens   = "//"
 indent           = { tab-width = 4, unit = "    " }
 auto-format      = false
-language-servers = [ "harper-ls", "scls", "circom-lsp" ]
+language-servers = [ "cspell", "harper-ls", "scls", "circom-lsp" ]
 
 [[grammar]]
 name   = "circom"
@@ -3942,7 +3946,7 @@ roots = ["Snakefile", "config.yaml", "environment.yaml", "workflow/"]
 file-types = ["smk", { glob = "Snakefile" } ]
 comment-tokens = ["#", "##"]
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "pylsp"  ]
+language-servers = [ "cspell", "harper-ls", "scls", "pylsp"  ]
 
 [language.formatter]
 command = "snakefmt"
@@ -3968,7 +3972,7 @@ source = { git = "https://github.com/elliotfontaine/tree-sitter-cylc", rev = "30
 name = "quint"
 scope = "source.quint"
 file-types = ["qnt"]
-language-servers = [ "harper-ls", "scls", "quint-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "quint-language-server" ]
 comment-token = "//"
 block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 2, unit = "  " }
@@ -3988,7 +3992,7 @@ block-comment-tokens = [
   { start = "/*", end = "*/" },
   { start = "/**", end = "*/" },
 ]
-language-servers = [ "harper-ls", "scls", "spade-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "spade-language-server" ]
 indent = { tab-width = 4, unit = "    " }
 
 [language.auto-pairs] 
@@ -4021,7 +4025,7 @@ file-types = ["koto"]
 comment-token = "#"
 block-comment-tokens = ["#-", "-#"]
 indent = { tab-width = 2, unit = "  " }
-language-servers = [ "harper-ls", "scls", "koto-ls" ]
+language-servers = [ "cspell", "harper-ls", "scls", "koto-ls" ]
 
 [[grammar]]
 name = "koto"
@@ -4035,7 +4039,7 @@ file-types = ["gpr"]
 roots = ["alire.toml"]
 comment-token = "--"
 indent = { tab-width = 3, unit = "   " }
-language-servers = [ "harper-ls", "scls", "ada-gpr-language-server" ]
+language-servers = [ "cspell", "harper-ls", "scls", "ada-gpr-language-server" ]
 
 [[grammar]]
 name = "gpr"
@@ -4079,7 +4083,7 @@ block-comment-tokens = { start = "/*", end = "*/" }
 indent = { tab-width = 2, unit = "  " }
 injection-regex = "codeql"
 grammar = "ql"
-language-servers = [ "harper-ls", "scls", "codeql" ]
+language-servers = [ "cspell", "harper-ls", "scls", "codeql" ]
 
 [[grammar]]
 name = "ql"
