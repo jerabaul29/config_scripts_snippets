@@ -163,7 +163,7 @@ args = ["--stdio"]
 
 [language-server.cspell]
 command = "cspell-lsp"
-args = ["--stdio", "--dictionary", "~/.config/harper-ls/dictionary.txt"]
+args = ["--stdio", "--dictionary", "/home/helix_ubuntu/.config/harper-ls/dictionary.txt"]
 
 [language-server.ansible-language-server]
 command = "ansible-language-server"
