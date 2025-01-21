@@ -17,6 +17,18 @@ import scipy as sp
 
 
 def scatter_with_trend(x: np.ndarray, y: np.ndarray):
+    """Plot a scatter of the (x, y) data, adding trend on top of it.
+
+    Arguments:
+        - x: numpy array of the X-axis data
+        - y: numpy array of the Y-axis data
+
+    Output: no output, this produces a plot."""
+
+    assert len(x) == len(y)
+    assert np.all(np.isfinite(x))
+    assert np.all(np.isfinite(y))
+    
     data , x_e, y_e = np.histogram2d( x, y, bins=20, density=True )
     z = sp.interpolate.interpn( ( 0.5*(x_e[1:] + x_e[:-1]) , 0.5*(y_e[1:]+y_e[:-1]) ) , data , np.vstack([x,y]).T , method = "splinef2d", bounds_error = False)
     z[np.where(np.isnan(z))] = 0.0
