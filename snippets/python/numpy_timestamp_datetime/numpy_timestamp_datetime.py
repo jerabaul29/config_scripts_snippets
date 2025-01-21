@@ -1,3 +1,5 @@
+# %%
+
 import time
 import os
 
@@ -13,9 +15,15 @@ import pytz
 
 import numpy as np
 
+import pandas as pd
+
+# %%
+
 utc_timezone = pytz.timezone("UTC")
 
 ic.configureOutput(prefix="", outputFunction=print)
+
+# %%
 
 # np timestamp from string
 print("")
@@ -25,6 +33,8 @@ utc_np = np.datetime64(utc_string)
 ic(utc_string)
 ic(utc_np)
 
+# %%
+
 # datetime to np timestamp
 print("")
 print("--- np timestamp from datetime")
@@ -33,6 +43,8 @@ some_datetime = utc_timezone.localize(some_datetime)
 np_datetime = np.datetime64(some_datetime)
 ic(some_datetime)
 ic(np_datetime)
+
+# %%
 
 # np timestamp to datetime
 print("")
@@ -45,3 +57,26 @@ datetime_from_np = datetime.datetime.utcfromtimestamp(int(utc_np)/1e9)
 datetime_from_np = utc_timezone.localize(datetime_from_np)
 ic(datetime_from_np)
 
+# %%
+
+# datetime range
+newtimes = np.arange(np.datetime64("2025-01-07T13:00:00"), np.datetime64("2025-01-10T07:00:00"), np.timedelta64(10, "s"))
+
+# %%
+
+# reading datetimes into pandas
+# option 1: "easy to parse" ISO
+pd_iso = pd.read_csv("./example_data_iso.csv", parse_dates=[0])
+pd_iso["timestamp"]
+
+# %%
+
+# option 2: "parse by hand" non ISO / non recognized
+# actually, this works...
+# pd_noniso = pd.read_csv("./example_data_notiso.csv", parse_dates=[0])
+# but let us make like it does not, then can do:
+pd_noiso = pd.read_csv("./example_data_notiso.csv")
+pd_noiso["parsed_datetime"] = [datetime.datetime.strptime(x, "%Y/%m/%d %H:%M:%S") for x in pd_noiso["timestamp"]]
+pd_noiso["parsed_datetime"]
+
+# %%
