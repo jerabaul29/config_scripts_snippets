@@ -13,6 +13,9 @@ end-of-line-diagnostics = "hint"
 [editor.soft-wrap]
 enable = true
 
+[keys.normal."space"]
+o = "file_picker_in_current_buffer_directory"
+
 [editor.statusline]
 left = ["mode", "spinner"]
 center = ["file-name"]
