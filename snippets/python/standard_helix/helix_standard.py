@@ -4,16 +4,21 @@ exit()
 
 # %%
 
-# ipython3 --pdb
 ipython3
+# ipython3 --pdb
+
+# %%
+
+%reset -f
+
+# %%
+
+%pdb on
+# %pdb off
 
 # %%
 
 from loguru import logger
-
-# %%
-
-# %reset -f
 
 # %%
 
