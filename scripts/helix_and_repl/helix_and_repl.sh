@@ -1,5 +1,7 @@
-# to work, this will require having a miniconda environment set up (with miniconda root in your home)
-# with env name myenv ; this is so that all repl / lsps / packages etc are available
+# to work, this will require having a mamba environment set up
+# !!!if you do not want to use the paid Anaconda Inc channels, MAKE SURE THAT YOU ONLY USE THE conda-forge CHANNEL!!!
+# check with:
+#     mamba config list
 
 # I recommend to install as:
 # cd ~/Desktop/Git
@@ -77,12 +79,12 @@ fi
 tmux split-window -h
 tmux split-window -v
 
-# NOTE: adapt the path / conda env name if necessary
+# NOTE: adapt the path / mamba env name if necessary
 # NOTE: the following pane numbers are for tmux set up with https://github.com/gpakosz/.tmux.git , i.e. tmux pane numbering starting at 1
 # for 0-indexed tmux panes (that is usually the default), reduce the indexes below by 1, i.e. 1->0 2->1 etc
-tmux send-keys -t 2 'eval "$(~/miniconda3/bin/conda shell.bash hook)" && conda activate dev' C-m
-tmux send-keys -t 1 'eval "$(~/miniconda3/bin/conda shell.bash hook)" && conda activate dev' C-m
-tmux send-keys -t 3 'eval "$(~/miniconda3/bin/conda shell.bash hook)" && conda activate dev' C-m
+tmux send-keys -t 2 'eval "mamba activate dev' C-m
+tmux send-keys -t 1 'eval "mamba activate dev' C-m
+tmux send-keys -t 3 'eval "mamba activate dev' C-m
 
 # NOTE:
 # do you prefer to start ipython3 with the built in debugger enabled or not?
