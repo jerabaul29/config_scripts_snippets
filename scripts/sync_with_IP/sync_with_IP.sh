@@ -42,6 +42,15 @@ function grt() {
         return 0
     fi
 
+  # Check if the current directory is a Git repository
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+      echo "Inside a Git repository. Proceeding..."
+      # Your git commands go here
+  else
+      echo "Fatal: Not a Git repository. Aborting."
+      return 1
+  fi
+  
   REMOTE_IP="$1"
 
   local REMOTE_TARGET="$HOME/Desktop/Git/"
@@ -70,6 +79,15 @@ function grf() {
         echo "v1.0"
         return 0
     fi
+
+  # Check if the current directory is a Git repository
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+      echo "Inside a Git repository. Proceeding..."
+      # Your git commands go here
+  else
+      echo "Fatal: Not a Git repository. Aborting."
+      return 1
+  fi
 
   REMOTE_IP="$1"
 
