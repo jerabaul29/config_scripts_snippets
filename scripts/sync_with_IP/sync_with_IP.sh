@@ -47,7 +47,7 @@ function grt() {
 
   # Check if the current directory is a Git repository
   if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-      echo "Inside a Git repository. Proceeding..."
+      echo "Inside a Git repository. Proceeding sync to remote..."
       # Your git commands go here
   else
       echo "Fatal: Not a Git repository. Aborting."
@@ -60,7 +60,7 @@ function grt() {
 
   local GIT_REPO_ROOT="$(get_crrt_git_root)"
 
-  rsync -avzP "$GIT_REPO_ROOT" "$USER@$REMOTE_IP:$REMOTE_TARGET"
+  rsync -az "$GIT_REPO_ROOT" "$USER@$REMOTE_IP:$REMOTE_TARGET"
 }
 
 ###############################
@@ -85,7 +85,7 @@ function grf() {
 
   # Check if the current directory is a Git repository
   if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-      echo "Inside a Git repository. Proceeding..."
+      echo "Inside a Git repository. Proceeding sync from remote..."
       # Your git commands go here
   else
       echo "Fatal: Not a Git repository. Aborting."
@@ -100,5 +100,5 @@ function grf() {
   local GIT_REPO_ROOT="$(get_crrt_git_root)"
   local GIT_REPO_LOCATION=$(dirname "$GIT_REPO_ROOT")
 
-  rsync -avzP "$USER@$REMOTE_IP:$REMOTE_TARGET" "$GIT_REPO_LOCATION"
+  rsync -az "$USER@$REMOTE_IP:$REMOTE_TARGET" "$GIT_REPO_LOCATION"
 }
