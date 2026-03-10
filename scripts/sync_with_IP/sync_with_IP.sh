@@ -32,7 +32,8 @@ function grt() {
     fi
 
     if [ "$1" == "-h" ]; then
-      echo "TODO"
+      echo "git rsync to"
+      echo "provide a single argument: the IP of the machine to which rsync the current git repo"
       return 0
     fi
     
@@ -60,7 +61,8 @@ function grf() {
     fi
 
     if [ "$1" == "-h" ]; then
-      echo "TODO"
+      echo "git rsync from"
+      echo "provide a single argument: the IP of the machine from which rsync the current git repo"
       return 0
     fi
     
