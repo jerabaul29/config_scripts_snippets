@@ -3,10 +3,13 @@
 ###############################
 
 # goal: sync a GH repository with its state on a target IP machine; either sync to or from, using rsync
-# assumption: the GH repositories are always hosted in $HOME/Desktop/Git/
+# assumption: the GH repositories on the remote are always hosted in $HOME/Desktop/Git/
 # the username is the same on the remote as on the local machine
 # how this works: determine the root path of the repository and its name, determine the path on the remote, and sync
-# how to install: source in your .bashrc or similar
+# how to install: source in your .bashrc or similar; for example in mine:
+#     source /home/jeanr/Desktop/Git/config_scripts_snippets/scripts/sync_with_IP/sync_with_IP.sh
+# how to use: just run the script with the target IP, from inside the repo that you want to sync to|from for example:
+#     source ~/.config/ki_utvikling_ip.dat && grf $VM_KI_IP
 
 ###############################
 
