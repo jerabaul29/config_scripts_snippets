@@ -56,10 +56,10 @@ tmux send-keys -t 1 'eval "mamba activate dev"' C-m
 tmux send-keys -t 3 'eval "mamba activate dev"' C-m
 
 # left: copilot cli in the current folder
-tmux send-keys -t 2 "copilot --allow-all-tools"
+tmux send-keys -t 1 "copilot --allow-all-tools"
 
 # right top: hlx in the current folder
-tmux send-keys -t 1 "hlx" C-m
+tmux send-keys -t 2 "hlx" C-m
 
 # right bottom: just a terminal in the current folder
 
