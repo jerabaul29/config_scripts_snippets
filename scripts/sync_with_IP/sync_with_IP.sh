@@ -60,7 +60,7 @@ function grt() {
 
   local GIT_REPO_ROOT="$(get_crrt_git_root)"
 
-  rsync -az "$GIT_REPO_ROOT" "$USER@$REMOTE_IP:$REMOTE_TARGET"
+  rsync -azv --exclude ".git/" "$GIT_REPO_ROOT" "$USER@$REMOTE_IP:$REMOTE_TARGET"
 }
 
 ###############################
@@ -100,5 +100,5 @@ function grf() {
   local GIT_REPO_ROOT="$(get_crrt_git_root)"
   local GIT_REPO_LOCATION=$(dirname "$GIT_REPO_ROOT")
 
-  rsync -az "$USER@$REMOTE_IP:$REMOTE_TARGET" "$GIT_REPO_LOCATION"
+  rsync -azv --exclude ".git/" "$USER@$REMOTE_IP:$REMOTE_TARGET" "$GIT_REPO_LOCATION"
 }
