@@ -63,4 +63,5 @@ TODO: explain how you want the project folder to be structured, what scripts and
 - when running scripts, run one at a time, wait for it to complete, then run another: be aware of RAM use to not freeze and crash the host machine
 - do not store raw prompts/data containing personal or confidential information; redact or summarize minimally, both in the README, DOCUMENTATION, AGENT, or any other file: do not leak credentials or passwords or secrets
 - if you notice anything that may look like a leaked secret or a security risk, let the user know immediately
-
+- if writing more languages in the project as a whole, also apply best practices relevant to this language; for example:
+  - if writing and running bash scripts, use `shellcheck` (`mamba` installable from conda-forge) and run it on the script, and use best practices (headers to fail on first error etc)
