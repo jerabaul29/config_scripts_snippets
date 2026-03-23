@@ -65,3 +65,4 @@ TODO: explain how you want the project folder to be structured, what scripts and
 - if you notice anything that may look like a leaked secret or a security risk, let the user know immediately
 - if writing more languages in the project as a whole, also apply best practices relevant to this language; for example:
   - if writing and running bash scripts, use `shellcheck` (`mamba` installable from conda-forge) and run it on the script, and use best practices (headers to fail on first error etc)
+- every time you have considered an answer or solution, consider alternatives and / or the opposite. Does the answer still make sense or should it be reconsidered? can more viewpoints be taken or alternative solutions be suggested with the human?
