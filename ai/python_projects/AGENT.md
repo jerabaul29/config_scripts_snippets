@@ -72,6 +72,7 @@ When starting a new session on this project, follow these steps in order:
 ## Misc
 
 - generally use your knowledge of python and programming to apply best practices on all aspects of the coding
+- follow safe development practices; dont leak any sensitive data, make sure there are no malicious or vulnerable code, make sure the code is safe to run and does what it advertises and what the user expects
 - at the end of each update to the code, go through the files and check that the documentation and readme are up to date; make sure all important aspects are documented in the DOCUMENTATION.md file
 - when writing code, check that all guidelines present here are followed
 - at the end of each code update, do a small review of the code, look for good possibilities for refactoring and improvement, and if there are clear improvement possibilities, work on implementing them
@@ -110,4 +111,5 @@ After completing any code changes, run through this checklist before returning t
 6. [ ] `AI_REASONING.md` updated if any new complex reasoning was produced
 7. [ ] Code has been reviewed for refactoring opportunities; improvements implemented if clear
 8. [ ] No secrets, credentials, or personal data are present in any file
+9. [ ] No security risk, malicious behavior, secret data leak, vulnerability
 
