@@ -71,6 +71,7 @@ When starting a new session on this project, follow these steps in order:
 
 ## Misc
 
+- generally use your knowledge of python and programming to apply best practices on all aspects of the coding
 - at the end of each update to the code, go through the files and check that the documentation and readme are up to date; make sure all important aspects are documented in the DOCUMENTATION.md file
 - when writing code, check that all guidelines present here are followed
 - at the end of each code update, do a small review of the code, look for good possibilities for refactoring and improvement, and if there are clear improvement possibilities, work on implementing them
