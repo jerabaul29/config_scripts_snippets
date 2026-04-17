@@ -7,6 +7,7 @@ TODO: describe the main aspects of the project
 ## Goal of this folder and code organization
 
 TODO: explain how you want the project folder to be structured, what scripts and figures should be produced, etc
+TODO: ideally, "### task 00: some description", then some paragraph that discusses what to do
 
 ## Code practices
 
@@ -29,13 +30,14 @@ TODO: explain how you want the project folder to be structured, what scripts and
 - make sure that the asserts are really useful and not tautological - asserts should really check that the data match what is expected, i.e. check that the input from the "messy real world" (in particular, sd card files written by the logger) match the assumptions about the structure of the file and content
 - if you are in doubt, or anything is unclear or ambiguous or badly explained or defined, do not guess - ask me (the user) for more information
 - if you can see several ways to implement the same thing, and you are unsure which one to choose, feel free to ask me (the user) for more information / chat together
+- before doing any implementation work, think carefully and plan it - make sure you understand the whole problem and have no doubt on anything before implementing, so that the implementation is well architectured and not a spaghetti mess
 
 ## Code setup and environment management: mamba
 
-- use mamba; it should be pre installed on the system; do not install it yourself, do not add channels, only conda-forge should be used; fail if no mamba and ask user help
-- use an environment.yml to define the necessary packages for the mamba environment
+- use mamba; it should be pre installed on the system; do not install it yourself, do not add channels, only conda-forge should be used; fail if no mamba and ask user help; there should be a "dev" default environment with default packages in it
+- use an environment.yml to define the necessary packages for the mamba environment if not using the default "dev" environment
 - use, or create if necessary, a dedicated environment for working on this, with name: "TODO: choose a good name"; use only this env for running code here
-- use only conda-forge channel (this should already be set by the mamba install available)
+- use only conda-forge channel (this should already be set by the mamba install available); we do not want to use any paid-ToS package from anaconda inc!
 
 ## Code architecture and conventions
 
@@ -66,3 +68,6 @@ TODO: explain how you want the project folder to be structured, what scripts and
 - if writing more languages in the project as a whole, also apply best practices relevant to this language; for example:
   - if writing and running bash scripts, use `shellcheck` (`mamba` installable from conda-forge) and run it on the script, and use best practices (headers to fail on first error etc)
 - every time you have considered an answer or solution, consider alternatives and / or the opposite. Does the answer still make sense or should it be reconsidered? can more viewpoints be taken or alternative solutions be suggested with the human?
+- whenever you are thinking about something, do not guess - calculate. For example, do not do "back of the envelope" calculation by yourself: write a small "AI_CALCULATION_XX.py", where XX is a small explanation of what you are doing; there, write python code to get the proper result. This way, 1) your thinking remains documented, 2) you are formally sure, if the code is correct, that you are not making a "silly" mistake in for example a back of the envelope calculation; do not guess or do calculations by yourself that can be wrong, write code that does it formally correct!
+- if you reason about some complex things that you want to keep track of, create a "AI_REASONING.md" if it does not exist already, or otherwise extend it, and document there complex reasoning and ideas you want to keep track of in the future also if a new session is started
+- when starting a new session, make sure to read the whole project and to get full understanding about it - this file, all relevant .md files, AI_REASONING.md if it exists, code if it exists, etc.
