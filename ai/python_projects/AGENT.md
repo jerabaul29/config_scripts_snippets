@@ -17,7 +17,7 @@ When starting a new session on this project, follow these steps in order:
 2. Read all `.md` files in the project root: `README.md`, `DOCUMENTATION.md`, `DISCUSSIONS_LOG.md`, `AI_REASONING.md`, `THOUGHTS.md` — skip those that do not exist yet
 3. Inspect the folder structure and list all files
 4. Read existing code files to understand the current state
-5. Check the mamba environment (name: TODO — see mamba section below) exists and activate it
+5. Check the mamba environment (name: — see mamba section below) exists and activate it
 6. Run existing tests (`pytest`) to confirm the baseline state before making any changes
 
 ## Code practices
@@ -38,9 +38,9 @@ When starting a new session on this project, follow these steps in order:
 - use established packages:
   - all python standard library packages are fine to use
   - TODO: list the packages that can be used
-  - TODO: once the package list above is finalised, remove this line and treat it as closed: no further package imports without discussing with the user first; if you think more packages are needed, ask / discuss with the user, then add these here and to the environment only if the user says yes
+  - no further package imports without discussing with the user first; if you think more packages are needed, ask / discuss with the user, then add these here and to the environment only if the user says yes
 - code defensively: use asserts to document and check all assumptions about incoming data
-- make sure that the asserts are really useful and not tautological - asserts should really check that the data match what is expected, i.e. check that the input from the "messy real world" (in particular, TODO: describe the key input data sources and formats that need defensive checking) match the assumptions about the structure of the file and content
+- make sure that the asserts are really useful and not tautological - asserts should really check that the data match what is expected, i.e. check that the input from the "messy real world" match the assumptions about the structure of the file and content
 - if you are in doubt, or anything is unclear or ambiguous or badly explained or defined, do not guess - ask me (the user) for more information
 - if you can see several ways to implement the same thing, and you are unsure which one to choose, feel free to ask me (the user) for more information / chat together
 - before doing any implementation work, think carefully and plan it - make sure you understand the whole problem and have no doubt on anything before implementing, so that the implementation is well architectured and not a spaghetti mess
