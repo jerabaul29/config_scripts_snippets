@@ -69,6 +69,7 @@ When starting a new session on this project, follow these steps in order:
 - the README.md should be a quick user-friendly summary of the project and its organization
 - when there are several steps in a file, separate these into logical sections with ipython cell markers (`# %%`). Make sure there is such a marker on the first line and last line of each file, so that these are ipython-friendly for users who run it this way.
 - save matplotlib figures as `.png`; also show them interactively if a graphical environment is available. Scripts may run headless on servers, so check this at script startup and disable interactive plotting if needed. Name figures as `{script_number}p{cell_number}_{descriptive_name}.png` — e.g. `00p01_plot_all_trajectories.png` (1st figure of script 00), `02p03_confusion_matrix.png` (3rd figure of script 02).
+- when keeping track of stuff, for example some runtime-generated logs or files, binary data about for example models etc: use as a prefix YYYY_MM_DD_HH_MM_SS_ where YMDHMS are from the UTC date and time.
 
 ## Misc
 
