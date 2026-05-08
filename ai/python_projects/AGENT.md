@@ -53,6 +53,7 @@ When starting a new session on this project, follow these steps in order:
 - use, or create if necessary, a dedicated environment for working on this, with name: "TODO: choose a good name"; use only this env for running code here
 - use only conda-forge channel (this should already be set by the mamba install available); we do not want to use any paid-ToS package from anaconda inc!
 - remember that installing the mamba environment may require a bit of interactivity - check the output, type -y if needed, check that the channel is well conda-forge. if not interactive / using -y , the mamba environment installation may stall.
+- the DOCUMENTATION.md must say to create the mamba environment with `mamba env create -f environment.yml` if it does not already exist for human users workflows; when you AI create it, remember to use -y as said above
 
 ## Code architecture and conventions
 
