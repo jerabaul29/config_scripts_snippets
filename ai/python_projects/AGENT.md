@@ -40,6 +40,7 @@ When starting a new session on this project, follow these steps in order:
   - TODO: list the packages that can be used
   - no further package imports without discussing with the user first; if you think more packages are needed, ask / discuss with the user, then add these here and to the environment only if the user says yes
 - code defensively: use asserts to document and check all assumptions about incoming data
+- you cannot trust input data - always assume they may have errors, be corrupted, etc, and do as many checks as possible
 - make sure that the asserts are really useful and not tautological - asserts should really check that the data match what is expected, i.e. check that the input from the "messy real world" match the assumptions about the structure of the file and content
 - if you are in doubt, or anything is unclear or ambiguous or badly explained or defined, do not guess - ask me (the user) for more information
 - if you can see several ways to implement the same thing, and you are unsure which one to choose, feel free to ask me (the user) for more information / chat together
