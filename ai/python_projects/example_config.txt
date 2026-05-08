@@ -1,8 +1,0 @@
-CONF:metid=SOME_RANDOM_6DIGITS_NUMBER
-CONF:typeid=538
-PARAMETER CONFIG
-
-PARCONF= hm0: WHM0: 0: 0:#sea_surface_wave_significant_height (meter)
-PARCONF= Tm01: WTM01: 0: 0:#sea_surface_wave_mean_period_from_variance_spectral_density_first_frequency_moment
-PARCONF= Tm02: PWA: 1: 0:#sea_surface_wave_mean_period_from_variance_spectral_density_second_frequency_moment
-#PARCONF= Tm_10: WTZ: 1: 0:#sea_surface_wave_mean_period_from_variance_spectral_density_inverse_frequency_moment; Inverse wave period ((m-1/m0))
