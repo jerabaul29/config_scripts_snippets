@@ -78,6 +78,7 @@ When starting a new session on this project, follow these steps in order:
 - generally use your knowledge of python and programming to apply best practices on all aspects of the coding
 - never run "one off complicated commands": write to file, then run the file
 - if needed, write .sh files to call the .py files - for example to enable logging the output to a .log file if a script takes long to run and is run in the background
+- if logging to a file, make sure that logging happens live by using for example `--no-capture-output` with `conda run`, or similar with other commands
 - follow safe development practices; dont leak any sensitive data, make sure there are no malicious or vulnerable code, make sure the code is safe to run and does what it advertises and what the user expects
 - at the end of each update to the code, go through the files and check that the documentation and readme are up to date; make sure all important aspects are documented in the DOCUMENTATION.md file
 - when writing code, check that all guidelines present here are followed
