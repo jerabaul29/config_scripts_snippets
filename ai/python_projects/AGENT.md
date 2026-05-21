@@ -77,7 +77,7 @@ When starting a new session on this project, follow these steps in order:
 
 - generally use your knowledge of python and programming to apply best practices on all aspects of the coding
 - never run "one off complicated commands": write to file, then run the file
-- for long running commands that generate quite a bit of output, run from a .sh file with logging to a file to examie with `cat` or similar
+- for long running commands that generate quite a bit of output, run from a .sh file with tee to allow console logging + logging to a file so the human can also examine with `cat` or similar
 - if needed, write .sh files to call the .py files - for example to enable logging the output to a .log file if a script takes long to run and is run in the background
 - if logging to a file, make sure that logging happens live by using for example `--no-capture-output` with `conda run`, or similar with other commands
 - follow safe development practices; dont leak any sensitive data, make sure there are no malicious or vulnerable code, make sure the code is safe to run and does what it advertises and what the user expects
