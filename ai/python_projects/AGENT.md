@@ -24,6 +24,8 @@ When starting a new session on this project, follow these steps in order:
 
 - have tests to run with pytest if relevant - for self implemented serious functions but not for small scripts
 - have logging with loguru; logs should contain all possibly interesting information: inputs, parameters, intermediate results, timings, warnings, and final outputs — err on the side of logging more rather than less, so that a session starting from scratch can fully understand what happened by reading the logs alone
+- make sure logs look good and are not messed up with loguru, in particular, only have loguru log single line entries
+- for long running commands that involve long loops (that last more than a few seconds), use `tqdm` to show progress live; remember to make this look nice with loguru
 - write simple, idiomatic python code
 - use typing / type annotation for the functions
 - use Google-style docstrings for all functions and classes
