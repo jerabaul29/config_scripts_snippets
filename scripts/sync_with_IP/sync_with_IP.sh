@@ -53,14 +53,22 @@ function grt() {
       echo "Fatal: Not a Git repository. Aborting."
       return 1
   fi
-  
-  REMOTE_IP="$1"
+
+  if [ $# -eq 1 ]; then
+        REMOTE_IP="$1"
+        REMOTE_USER="$USER"
+  fi
+
+  if [ $# -eq 2 ]; then
+        REMOTE_IP="$1"
+        REMOTE_USER="$2"
+  fi
 
   local REMOTE_TARGET="$HOME/Desktop/Git/"
 
   local GIT_REPO_ROOT="$(get_crrt_git_root)"
 
-  rsync -azv --exclude ".git/" "$GIT_REPO_ROOT" "$USER@$REMOTE_IP:$REMOTE_TARGET"
+  rsync -azv --exclude ".git/" "$GIT_REPO_ROOT" "$REMOTE_USER@$REMOTE_IP:$REMOTE_TARGET"
 }
 
 ###############################
@@ -92,7 +100,15 @@ function grf() {
       return 1
   fi
 
-  REMOTE_IP="$1"
+  if [ $# -eq 1 ]; then
+        REMOTE_IP="$1"
+        REMOTE_USER="$USER"
+  fi
+
+  if [ $# -eq 2 ]; then
+        REMOTE_IP="$1"
+        REMOTE_USER="$2"
+  fi
 
   local GIT_BASE_NAME="$(get_git_repo_name)"
   local REMOTE_TARGET="$HOME/Desktop/Git/$GIT_BASE_NAME"
@@ -100,5 +116,5 @@ function grf() {
   local GIT_REPO_ROOT="$(get_crrt_git_root)"
   local GIT_REPO_LOCATION=$(dirname "$GIT_REPO_ROOT")
 
-  rsync -azv --exclude ".git/" "$USER@$REMOTE_IP:$REMOTE_TARGET" "$GIT_REPO_LOCATION"
+  rsync -azv --exclude ".git/" "$REMOTE_USER@$REMOTE_IP:$REMOTE_TARGET" "$GIT_REPO_LOCATION"
 }
