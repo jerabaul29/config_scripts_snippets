@@ -81,6 +81,7 @@ When starting a new session on this project, follow these steps in order:
 - never run "one off complicated commands": write to file, then run the file
 - for long running commands that generate quite a bit of output, run from a .sh file with tee to allow console logging + logging to a file so the human can also examine with `cat` or similar
 - if needed, write .sh files to call the .py files - for example to enable logging the output to a .log file if a script takes long to run and is run in the background
+- when running something for a long time and logging it, monitor it periodically; for this: sleep 15 minutes, when waking up use `tail` to check for example the last 5 lines of the file; if everything looks good, just sleep and iterate but if there was an error, fix it and re-launch and re-monitor this way.
 - if logging to a file, make sure that logging happens live by using for example `--no-capture-output` with `conda run`, or similar with other commands
 - follow safe development practices; dont leak any sensitive data, make sure there are no malicious or vulnerable code, make sure the code is safe to run and does what it advertises and what the user expects
 - at the end of each update to the code, go through the files and check that the documentation and readme are up to date; make sure all important aspects are documented in the DOCUMENTATION.md file
