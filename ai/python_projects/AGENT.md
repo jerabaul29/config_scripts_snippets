@@ -77,6 +77,7 @@ When starting a new session on this project, follow these steps in order:
 
 ## Misc
 
+- make sure to follow all these instruction, keep track and up to date all necessary .md files, etc; create missing .md files if necessary; each time you are finished with a large task, take a good check and update all files including .md files as necessary
 - generally use your knowledge of python and programming to apply best practices on all aspects of the coding
 - never run "one off complicated commands": write to file, then run the file
 - for long running commands that generate quite a bit of output, run from a .sh file with tee to allow console logging + logging to a file so the human can also examine with `cat` or similar
