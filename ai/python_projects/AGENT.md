@@ -66,6 +66,7 @@ When starting a new session on this project, follow these steps in order:
 - avoid object oriented if not necessary, make the code based on simple functions
 - pass the ALL_CAPS_CONSTANTS as default args, it is ok to have many default args to the functions
 - make sure to use JSON config files to summarize config choices, architecture choices for neural networks if there are some, etc; make the code robust and general so that it easily supports running for example several experiments and models, doing bookkeeping to be able to analyze the results a posteriori; prefer JSON over other formats (YAML, TOML, CSV) for consistency
+- make sure to log important results, tasks, script progress, etc, in logs. Have logs clearly named, typically for example "01_some_script_2026_05_13T15_25_15.log", which indicates the script that is being logged, when the script has been run.
 - the work is split into independent, consecutive, self contained tasks that each correspond to a python file: run first `00_PLACEHOLDER_FOR_TASK.py`, then `01_PLACEHOLDER_FOR_ANOTHER_TASK.py`, etc...
 - all scripts must use a `if __name__ == "__main__":` guard so they can be imported in tests without side effects
 - for scripts that are complex or important, use explicit exit codes: `sys.exit(0)` on success, `sys.exit(1)` on failure, so that callers and headless runners can detect errors reliably
