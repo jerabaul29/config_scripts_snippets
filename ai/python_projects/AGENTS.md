@@ -13,11 +13,11 @@ TODO: ideally, "### task 00: some description", then some paragraph that discuss
 
 When starting a new session on this project, follow these steps in order:
 
-1. Read this file (`AGENT.md`) fully
+1. Read this file (`AGENTS.md`) fully
 2. Read all `.md` files in the project root: `README.md`, `DOCUMENTATION.md`, `DISCUSSIONS_LOG.md`, `AI_REASONING.md`, `THOUGHTS.md` — skip those that do not exist yet
 3. Inspect the folder structure and list all files
 4. Read existing code files to understand the current state
-5. Check the mamba environment (name: — see mamba section below) exists and activate it
+5. Check the mamba environment (name: — see mamba section below) exists and activate it; if not and you need it, install it
 6. Run existing tests (`pytest`) to confirm the baseline state before making any changes
 
 ## Code practices
@@ -113,7 +113,7 @@ When starting a new session on this project, follow these steps in order:
 - whenever you are thinking about something, do not guess - calculate. For example, do not do "back of the envelope" calculation by yourself: write a small script `AI_calculations/AI_CALCULATION_XX.py` (where XX is a short description of what you are computing), run it to get the proper result, and archive it in `AI_calculations/`. This way, 1) your thinking remains documented, 2) you are formally sure, if the code is correct, that you are not making a "silly" mistake in for example a back of the envelope calculation; do not guess or do calculations by yourself that can be wrong, write code that does it formally correct! All scripts in `AI_calculations/` must follow the same coding guidelines as the rest of the project (linting, spelling, type checking, etc.)
 - if you reason about some complex things that you want to keep track of, create a "AI_REASONING.md" if it does not exist already, or otherwise extend it, and document there complex reasoning and ideas you want to keep track of in the future also if a new session is started
 - when starting a new session, make sure to read the whole project and to get full understanding about it - this file, all relevant .md files, AI_REASONING.md if it exists, code if it exists, etc. Follow the "Session startup" checklist above.
-- also feel free to suggest meta improvements to this AGENT.md file - for example if more automatic checks or tooling have become available, feel free to suggest adding these here, or if you see possible better recommendations based on actual problems you have to solve, you can suggest feedback to this file. meta-improvement is good!
+- also feel free to suggest meta improvements to this AGENTS.md file - for example if more automatic checks or tooling have become available, feel free to suggest adding these here, or if you see possible better recommendations based on actual problems you have to solve, you can suggest feedback to this file. meta-improvement is good!
 
 ## Before responding to the user
 
