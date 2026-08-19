@@ -114,6 +114,7 @@ When starting a new session on this project, follow these steps in order:
 - if you reason about some complex things that you want to keep track of, create a "AI_REASONING.md" if it does not exist already, or otherwise extend it, and document there complex reasoning and ideas you want to keep track of in the future also if a new session is started
 - when starting a new session, make sure to read the whole project and to get full understanding about it - this file, all relevant .md files, AI_REASONING.md if it exists, code if it exists, etc. Follow the "Session startup" checklist above.
 - also feel free to suggest meta improvements to this AGENTS.md file - for example if more automatic checks or tooling have become available, feel free to suggest adding these here, or if you see possible better recommendations based on actual problems you have to solve, you can suggest feedback to this file. meta-improvement is good!
+- if using sub-agents or similar, do not use another and especially not a more expensive model than the current one without asking the user. For example, if the present model is a sonnet model, creating a sonnet sub-agent of similar is ok. But it is not ok to create an opus or fable sub-agent. By default, use the same model for new sub-agents or similar that you are, and if you want to use a different one, ask the user first if this is ok.
 
 ## Before responding to the user
 
