@@ -51,6 +51,14 @@ When starting a new session on this project, follow these steps in order:
 ## Code setup and environment management: mamba
 
 - use mamba; it should be pre installed on the system; do not install it yourself, do not add channels, only conda-forge should be used; fail if no mamba and ask user help; there should be a "dev" default environment with default packages in it
+- if mamba is actually not present, ask the user if ok to install it, and if the user asks you to install it, follow the instructions below:
+    ```bash
+    # mamba from conda-forge: only use the conda-forge channel, do NOT use the paid Anaconda Inc channels
+    wget -O Miniforge3.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
+    bash Miniforge3.sh -b -p "${HOME}/conda"
+    source "${HOME}/conda/etc/profile.d/mamba.sh"
+    mamba shell init
+    ```
 - use an environment.yml to define the necessary packages for the mamba environment if not using the default "dev" environment; always pin package versions (e.g. `numpy=1.26.4`) for reproducibility
 - use, or create if necessary, a dedicated environment for working on this, with name: "TODO: choose a good name"; use only this env for running code here
 - use only conda-forge channel (this should already be set by the mamba install available); we do not want to use any paid-ToS package from anaconda inc!
