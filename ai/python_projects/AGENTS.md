@@ -125,6 +125,10 @@ When starting a new session on this project, follow these steps in order:
 - also feel free to suggest meta improvements to this AGENTS.md file - for example if more automatic checks or tooling have become available, feel free to suggest adding these here, or if you see possible better recommendations based on actual problems you have to solve, you can suggest feedback to this file. meta-improvement is good!
 - if using sub-agents or similar, do not use another and especially not a more expensive model than the current one without asking the user. For example, if the present model is a sonnet model, creating a sonnet sub-agent of similar is ok. But it is not ok to create an opus or fable sub-agent. By default, use the same model for new sub-agents or similar that you are, and if you want to use a different one, ask the user first if this is ok.
 
+## Specific design tastes
+
+- If reading nc files against thredds server sources or similar, just directly use xarray to read data from the openDAP url, dont download the files locally unless explicitly asked.
+
 ## Before responding to the user
 
 After completing any code changes, run through this checklist before returning to the user:
