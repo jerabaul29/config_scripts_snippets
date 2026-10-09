@@ -26,4 +26,15 @@ Tasks that the bash script should implement and run in sequence (any failure sho
 - Use a regexp with field capture to find the latest version released: it should be the first match for a string in the wget output looking like https://github.com/laurent22/joplin/releases/tag/v3.7.21 (note version is v. some number . some number . some number), and print the corresponding version for the user.
 - Check that the appimage version is equal to the latest github release version, and print confirmation to the user.
 - Check that Joplin is not already running (abort with an error if it is): use `pgrep` for the current user's processes matching the AppImage file name (`Joplin-X.Y.Z.AppImage`) or its `/tmp/.mount_Joplin*` mount; `pgrep` exit code 1 means not running, any other non-zero code is an error. Print confirmation to the user.
-- Start the appimage (for now without bubblewrap), detached with `setsid -f` (own session, stdin from `/dev/null`, stdout/stderr appended to `${XDG_STATE_HOME:-$HOME/.local/state}/joplin_run.log`) so that Joplin keeps running if the terminal is closed or killed. After a short wait, check it is still running and abort with an error if it exited immediately.
+- Start the AppImage with bubblewrap (see the bubblewrap rules under), detached with `setsid -f` (own session, stdin from `/dev/null`, stdout/stderr appended to `${XDG_STATE_HOME:-$HOME/.local/state}/joplin_run.log`) so Joplin keeps running if the terminal is closed or killed. Use `APPIMAGE_EXTRACT_AND_RUN=1` so the verified AppImage does not need FUSE inside the sandbox. After a short wait, check it is still running and abort with an error if it exited immediately.
+
+Bubblewrap rules (keep these rules in sync with `joplin_run.sh`):
+- By default, everything not needed is locked away.
+- Expose `/usr`, `/bin`, `/lib` (and `/lib64` when present) read-only for the application runtime. Expose only the needed host configuration read-only: hosts, name-service configuration, passwd/group, local time, TLS certificates, fonts, and the resolved DNS configuration. Expose the selected AppImage read-only at `/opt/Joplin.AppImage`.
+- Provide isolated writable `/tmp` and home/cache/state paths. These are temporary and are not host directories.
+- Allow persistent read/write access only to `$HOME/.config/joplin-desktop`.
+- Allow the active GUI connection only: one Wayland socket (preferred when available) or one local X11 display socket and its optional read-only Xauthority file. Do not expose the rest of the user's home or session runtime sockets.
+- Isolate the PID, IPC, and UTS namespaces. Leave the network namespace shared with the host so Joplin Cloud can connect.
+- Bubblewrap cannot limit shared networking to Joplin Cloud. This configuration permits Joplin general network access; restricting it to Cloud requires a separate host firewall or proxy.
+- GPU devices, audio, D-Bus/portals, keyring, notifications, and arbitrary host files are not exposed. Grant them separately only if a needed feature requires them. File import/export outside Joplin's data folder is intentionally unavailable by default.
+- Before launch, the script runs a no-op inside the configured sandbox to verify Bubblewrap mounts and namespace support. The host must permit the namespaces Bubblewrap needs; an installed `bwrap` alone is not sufficient.
