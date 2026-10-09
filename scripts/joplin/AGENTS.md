@@ -17,8 +17,10 @@ Rules for the bash script:
 
 Tasks that the bash script should implement and run in sequence (any failure should abort with error message and error code):
 - Find the latest local version of the appimage in `$HOME/Desktop/Software/Joplin` and print it for the user.
+  - File naming format: `Joplin-3.7.21.AppImage` with associated `Joplin-3.7.21.AppImage.sha512` (3.7.21 is only an example; the actual version may differ and be more recent).
+  - "Latest" is determined from the version in the file name (version sort, e.g. `sort -V`), not from file modification time.
 - Check that the sha512 for the latest local version (.sha512 corresponding file) is correct according to `sha512sum -c` and print it for the user.
-- Get the latest version available by `wget https://github.com/laurent22/joplin/releases/latest` .
+- Get the latest version available by `wget https://github.com/laurent22/joplin/releases/latest` : use wget to fetch the page (e.g. `wget -qO-` to stdout), then match the version in its output (next step).
 - Use a regexp with field capture to find the latest version released: it should be the first match for a string in the wget output looking like https://github.com/laurent22/joplin/releases/tag/v3.7.21 (note version is v. some number . some number . some number), and print the corresponding version for the user.
 - Check that the appimage version is equal to the latest github release version, and print confirmation to the user.
 - Start the appimage (for now without bubblewrap).
