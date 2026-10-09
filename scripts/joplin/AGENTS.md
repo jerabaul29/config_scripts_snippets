@@ -30,10 +30,11 @@ Tasks that the bash script should implement and run in sequence (any failure sho
 
 Bubblewrap rules (keep these rules in sync with `joplin_run.sh`):
 - By default, everything not needed is locked away.
-- Expose `/usr`, `/bin`, `/lib` (and `/lib64` when present) read-only for the application runtime. Expose only the needed host configuration read-only: hosts, name-service configuration, passwd/group, local time, TLS certificates, fonts, and the resolved DNS configuration. Expose the selected AppImage read-only at `/opt/Joplin.AppImage`.
+- Expose `/usr`, `/bin`, `/lib` (and `/lib64` when present) read-only for the application runtime. Expose only the needed host configuration read-only: hosts, name-service configuration, passwd/group, local time (and `/etc/timezone` when present), TLS certificates, fonts, and the resolved DNS configuration. Pass through `LANG`, `LANGUAGE`, and host `LC_*` values without exposing more locale configuration.
 - Provide isolated writable `/tmp` and home/cache/state paths. These are temporary and are not host directories.
 - Allow persistent read/write access only to `$HOME/.config/joplin-desktop`.
 - Allow the active GUI connection only: one Wayland socket (preferred when available) or one local X11 display socket and its optional read-only Xauthority file. Do not expose the rest of the user's home or session runtime sockets.
+- Pass the GNOME GTK theme and color-scheme selection as the `GTK_THEME` environment variable when `gsettings` is available, rather than exposing the user's desktop settings database or D-Bus.
 - Isolate the PID, IPC, and UTS namespaces. Leave the network namespace shared with the host so Joplin Cloud can connect.
 - Bubblewrap cannot limit shared networking to Joplin Cloud. This configuration permits Joplin general network access; restricting it to Cloud requires a separate host firewall or proxy.
 - GPU devices, audio, D-Bus/portals, keyring, notifications, and arbitrary host files are not exposed. Grant them separately only if a needed feature requires them. File import/export outside Joplin's data folder is intentionally unavailable by default.

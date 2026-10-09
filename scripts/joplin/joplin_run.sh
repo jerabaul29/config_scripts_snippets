@@ -2,7 +2,8 @@
 # Run the verified latest Joplin AppImage in a Bubblewrap sandbox.
 # Sandbox policy: read-only system runtime and AppImage; ephemeral writable home
 # and /tmp; persistent read/write access only to Joplin's data directory; access
-# to one GUI socket; shared host networking, not restricted to Joplin Cloud.
+# to one GUI socket; host timezone, locale, and GTK theme values; shared host
+# networking, not restricted to Joplin Cloud.
 
 set -Eeuo pipefail
 shopt -s nullglob
@@ -96,6 +97,38 @@ for system_file in /etc/hosts /etc/nsswitch.conf /etc/passwd /etc/group /etc/loc
 done
 [[ -d /etc/ssl/certs && -d /etc/fonts ]] || die "required TLS or font configuration is missing"
 
+declare -a locale_env=()
+if [[ -n "${LANGUAGE:-}" ]]; then
+    locale_env+=(--setenv LANGUAGE "$LANGUAGE")
+fi
+for variable in "${!LC_@}"; do
+    [[ "$variable" =~ ^LC_[A-Z_]+$ ]] || continue
+    locale_env+=(--setenv "$variable" "${!variable}")
+done
+
+gtk_theme="${GTK_THEME:-}"
+if command -v gsettings >/dev/null 2>&1; then
+    if theme_value="$(gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null)" \
+        && color_value="$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null)"; then
+        theme_regex="^'([[:alnum:]_. -]+)'$"
+        if [[ "$theme_value" =~ $theme_regex ]]; then
+            gtk_theme="${BASH_REMATCH[1]}"
+            case "$color_value" in
+                "'prefer-dark'")
+                    [[ "$gtk_theme" == *:dark ]] || gtk_theme="${gtk_theme}:dark"
+                    ;;
+                "'prefer-light'")
+                    gtk_theme="${gtk_theme%-dark}"
+                    ;;
+                "'default'") ;;
+                *) die "unexpected desktop color-scheme setting: $color_value" ;;
+            esac
+        else
+            die "unexpected desktop GTK theme setting: $theme_value"
+        fi
+    fi
+fi
+
 readonly SANDBOX_HOME="/home/joplin"
 readonly SANDBOX_CONFIG="${SANDBOX_HOME}/.config"
 readonly SANDBOX_DATA="${SANDBOX_CONFIG}/joplin-desktop"
@@ -111,6 +144,12 @@ declare -a sandbox_env=(
     --setenv TMPDIR /tmp
     --setenv APPIMAGE_EXTRACT_AND_RUN 1
 )
+if [[ -n "$gtk_theme" ]]; then
+    sandbox_env+=(--setenv GTK_THEME "$gtk_theme")
+    printf 'GTK theme: %s\n' "$gtk_theme"
+fi
+sandbox_env+=("${locale_env[@]}")
+printf 'Locale: host LANG, LC_* and LANGUAGE values\n'
 declare -a sandbox_args=(
     --unshare-pid
     --unshare-ipc
@@ -144,6 +183,10 @@ declare -a sandbox_args=(
     --dir /run
     --dir "$SANDBOX_RUNTIME"
 )
+if [[ -f /etc/timezone ]]; then
+    [[ -r /etc/timezone ]] || die "/etc/timezone is not readable"
+    sandbox_args+=(--ro-bind /etc/timezone /etc/timezone)
+fi
 if [[ -d /lib64 ]]; then
     sandbox_args+=(--dir /lib64 --ro-bind /lib64 /lib64)
 fi
