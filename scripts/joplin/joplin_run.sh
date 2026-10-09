@@ -19,7 +19,7 @@ readonly RELEASES_URL="https://github.com/laurent22/joplin/releases/latest"
 readonly TAG_REGEX='https://github\.com/laurent22/joplin/releases/tag/v([0-9]+\.[0-9]+\.[0-9]+)'
 readonly FILE_REGEX='^Joplin-([0-9]+\.[0-9]+\.[0-9]+)\.AppImage$'
 
-for cmd in wget sha512sum sort tail basename pgrep; do
+for cmd in wget sha512sum sort tail basename pgrep setsid id mkdir sleep; do
     command -v "$cmd" >/dev/null 2>&1 || die "required command not found: $cmd"
 done
 [[ -d "$JOPLIN_DIR" ]] || die "directory not found: $JOPLIN_DIR"
@@ -74,7 +74,14 @@ elif ((rc != 1)); then
 fi
 printf 'Confirmed: Joplin is not already running\n'
 
-# 6. Start (bubblewrap to be added later)
-printf 'Starting %s\n' "$appimage"
-trap - ERR
-exec "$appimage"
+# 6. Start detached in its own session, so it survives the terminal being closed/killed
+# (bubblewrap to be added later)
+readonly LOG_DIR="${XDG_STATE_HOME:-${HOME}/.local/state}"
+readonly LOG_FILE="${LOG_DIR}/joplin_run.log"
+mkdir -p -- "$LOG_DIR"
+printf 'Starting %s (detached, output in %s)\n' "$appimage" "$LOG_FILE"
+setsid -f "$appimage" </dev/null >>"$LOG_FILE" 2>&1 || die "failed to start $appimage"
+sleep 2
+pgrep -u "$(id -u)" -f 'Joplin-[0-9]+\.[0-9]+\.[0-9]+\.AppImage|/\.mount_[Jj]oplin' >/dev/null \
+    || die "Joplin exited right after start; see $LOG_FILE"
+printf 'Joplin started\n'
