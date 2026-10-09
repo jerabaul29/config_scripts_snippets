@@ -23,4 +23,5 @@ Tasks that the bash script should implement and run in sequence (any failure sho
 - Get the latest version available by `wget https://github.com/laurent22/joplin/releases/latest` : use wget to fetch the page (e.g. `wget -qO-` to stdout), then match the version in its output (next step).
 - Use a regexp with field capture to find the latest version released: it should be the first match for a string in the wget output looking like https://github.com/laurent22/joplin/releases/tag/v3.7.21 (note version is v. some number . some number . some number), and print the corresponding version for the user.
 - Check that the appimage version is equal to the latest github release version, and print confirmation to the user.
+- Check that Joplin is not already running (abort with an error if it is): use `pgrep` for the current user's processes matching the AppImage file name (`Joplin-X.Y.Z.AppImage`) or its `/tmp/.mount_Joplin*` mount; `pgrep` exit code 1 means not running, any other non-zero code is an error. Print confirmation to the user.
 - Start the appimage (for now without bubblewrap).

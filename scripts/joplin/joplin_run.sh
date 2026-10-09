@@ -19,7 +19,7 @@ readonly RELEASES_URL="https://github.com/laurent22/joplin/releases/latest"
 readonly TAG_REGEX='https://github\.com/laurent22/joplin/releases/tag/v([0-9]+\.[0-9]+\.[0-9]+)'
 readonly FILE_REGEX='^Joplin-([0-9]+\.[0-9]+\.[0-9]+)\.AppImage$'
 
-for cmd in wget sha512sum sort tail basename; do
+for cmd in wget sha512sum sort tail basename pgrep; do
     command -v "$cmd" >/dev/null 2>&1 || die "required command not found: $cmd"
 done
 [[ -d "$JOPLIN_DIR" ]] || die "directory not found: $JOPLIN_DIR"
@@ -63,7 +63,18 @@ printf 'Latest GitHub release: %s\n' "$latest_version"
     || die "local version ($local_version) differs from latest release ($latest_version); please update"
 printf 'Confirmed: local AppImage is up to date (%s)\n' "$latest_version"
 
-# 5. Start (bubblewrap to be added later)
+# 5. Make sure Joplin is not already running (AppImage file or its /tmp/.mount_Joplin* mount)
+rc=0
+running="$(pgrep -u "$(id -u)" -af 'Joplin-[0-9]+\.[0-9]+\.[0-9]+\.AppImage|/\.mount_[Jj]oplin' 2>&1)" || rc=$?
+if ((rc == 0)); then
+    die "Joplin appears to be already running:
+${running}"
+elif ((rc != 1)); then
+    die "pgrep failed (exit code $rc): $running"
+fi
+printf 'Confirmed: Joplin is not already running\n'
+
+# 6. Start (bubblewrap to be added later)
 printf 'Starting %s\n' "$appimage"
 trap - ERR
 exec "$appimage"
