@@ -4,6 +4,8 @@ This should describe how to design a small bash script compatible with modern Ub
 
 The goal of the script is to make it easier to use Joplin in a safe way: making sure it is updated, and running well isolated with minimum sets of rights with bubblewrap.
 
+Make sure the .sh script and this .md file are kept in sync and reflecting each other.
+
 Assumptions about the system setup:
 - There is one or more Joplin AppImage and associated sha512 files under `$HOME/Desktop/Software/Joplin` ; only the latest and most up to date should be run.
 - The appimage can be run and the necessary packages are on the system so it runs without error - this is the user's responsibility.
