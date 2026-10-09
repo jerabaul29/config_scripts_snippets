@@ -20,12 +20,13 @@ trap 'die "command failed at line ${LINENO}: ${BASH_COMMAND}"' ERR
 
 readonly JOPLIN_DIR="${HOME}/Desktop/Software/Joplin"
 readonly JOPLIN_DATA_DIR="${HOME}/.config/joplin-desktop"
+readonly SHARE_DIR="/tmp/joplin_sharedrop"
 readonly RELEASES_URL="https://github.com/laurent22/joplin/releases/latest"
 readonly TAG_REGEX='https://github\.com/laurent22/joplin/releases/tag/v([0-9]+\.[0-9]+\.[0-9]+)'
 readonly FILE_REGEX='^Joplin-([0-9]+\.[0-9]+\.[0-9]+)\.AppImage$'
 readonly PROCESS_REGEX='Joplin-[0-9]+\.[0-9]+\.[0-9]+\.AppImage|/opt/Joplin\.AppImage|/\.mount_[Jj]oplin'
 
-for cmd in wget sha512sum sort tail basename pgrep setsid id mkdir sleep readlink bwrap; do
+for cmd in wget sha512sum sort tail basename pgrep setsid id mkdir chmod sleep readlink bwrap; do
     command -v "$cmd" >/dev/null 2>&1 || die "required command not found: $cmd"
 done
 [[ -d "$JOPLIN_DIR" ]] || die "directory not found: $JOPLIN_DIR"
@@ -90,6 +91,18 @@ mkdir -p -- "$JOPLIN_DATA_DIR"
 [[ -r "$JOPLIN_DATA_DIR" && -w "$JOPLIN_DATA_DIR" ]] \
     || die "Joplin data directory must be readable and writable: $JOPLIN_DATA_DIR"
 
+if [[ -L "$SHARE_DIR" ]]; then
+    die "sharedrop path must not be a symbolic link: $SHARE_DIR"
+elif [[ ! -e "$SHARE_DIR" ]]; then
+    mkdir -m 700 -- "$SHARE_DIR" || die "could not create sharedrop directory: $SHARE_DIR"
+fi
+[[ -d "$SHARE_DIR" && -O "$SHARE_DIR" && ! -L "$SHARE_DIR" ]] \
+    || die "sharedrop path must be a real directory owned by the current user: $SHARE_DIR"
+chmod 700 -- "$SHARE_DIR" || die "could not restrict sharedrop directory permissions: $SHARE_DIR"
+[[ -r "$SHARE_DIR" && -w "$SHARE_DIR" && -x "$SHARE_DIR" ]] \
+    || die "sharedrop directory must be readable and writable by the current user: $SHARE_DIR"
+printf 'Sharedrop: host files in %s are visible to Joplin read-only\n' "$SHARE_DIR"
+
 resolv_conf="$(readlink -f /etc/resolv.conf)" || die "could not resolve /etc/resolv.conf"
 [[ -r "$resolv_conf" ]] || die "DNS resolver configuration is not readable: $resolv_conf"
 for system_file in /etc/hosts /etc/nsswitch.conf /etc/passwd /etc/group /etc/localtime; do
@@ -132,6 +145,7 @@ fi
 readonly SANDBOX_HOME="/home/joplin"
 readonly SANDBOX_CONFIG="${SANDBOX_HOME}/.config"
 readonly SANDBOX_DATA="${SANDBOX_CONFIG}/joplin-desktop"
+readonly SANDBOX_SHARE="${SANDBOX_HOME}/Sharedrop"
 readonly SANDBOX_RUNTIME="/run/joplin"
 declare -a sandbox_env=(
     --clearenv
@@ -178,6 +192,8 @@ declare -a sandbox_args=(
     --ro-bind "$appimage" /opt/Joplin.AppImage
     --dir /home
     --tmpfs "$SANDBOX_HOME"
+    --dir "$SANDBOX_SHARE"
+    --ro-bind "$SHARE_DIR" "$SANDBOX_SHARE"
     --dir "$SANDBOX_CONFIG"
     --bind "$JOPLIN_DATA_DIR" "$SANDBOX_DATA"
     --dir /run
