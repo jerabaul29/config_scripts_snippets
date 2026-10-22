@@ -21,8 +21,9 @@ Tasks that the bash script should implement and run in sequence (any failure sho
 - Find the latest local version of the appimage in `$HOME/Desktop/Software/Joplin` and print it for the user.
   - File naming format: `Joplin-3.7.21.AppImage` with associated `Joplin-3.7.21.AppImage.sha512` (3.7.21 is only an example; the actual version may differ and be more recent).
   - "Latest" is determined from the version in the file name (version sort, e.g. `sort -V`), not from file modification time.
+- Before checksum verification, require the AppImage and `.sha512` to be regular files (not symlinks) owned by the current user and not group/world writable.
 - Check that the sha512 for the latest local version (.sha512 corresponding file) is correct according to `sha512sum -c` and print it for the user.
-- Get the latest version available by `wget https://github.com/laurent22/joplin/releases/latest` : use wget to fetch the page (e.g. `wget -qO-` to stdout), then match the version in its output (next step).
+- Get the latest version available by `wget https://github.com/laurent22/joplin/releases/latest` : use wget (HTTPS only, limited redirects) to fetch the page (e.g. `wget -qO-` to stdout), then match the version in its output (next step).
 - Use a regexp with field capture to find the latest version released: it should be the first match for a string in the wget output looking like https://github.com/laurent22/joplin/releases/tag/v3.7.21 (note version is v. some number . some number . some number), and print the corresponding version for the user.
 - Check that the appimage version is equal to the latest github release version, and print confirmation to the user.
 - Check that Joplin is not already running (abort with an error if it is): use `pgrep` for the current user's processes matching the AppImage file name (`Joplin-X.Y.Z.AppImage`) or its `/tmp/.mount_Joplin*` mount; `pgrep` exit code 1 means not running, any other non-zero code is an error. Print confirmation to the user.
@@ -30,14 +31,15 @@ Tasks that the bash script should implement and run in sequence (any failure sho
 
 Bubblewrap rules (keep these rules in sync with `joplin_run.sh`):
 - By default, everything not needed is locked away.
-- Expose `/usr`, `/bin`, `/lib` (and `/lib64` when present) read-only for the application runtime. Expose only the needed host configuration read-only: hosts, name-service configuration, passwd/group, local time (and `/etc/timezone` when present), TLS certificates, fonts, and the resolved DNS configuration. Pass through `LANG`, `LANGUAGE`, and host `LC_*` values without exposing more locale configuration.
+- Target Ubuntu 24.04 or newer only (abort otherwise, and abort if `/bin`, `/lib`, `/lib64` are not merged-/usr symlinks). Expose only `/usr` read-only for the application runtime, with `/bin`, `/lib` and `/lib64` as symlinks into it. Expose only the needed host configuration read-only: hosts, name-service configuration, passwd/group, local time and `/etc/timezone`, TLS certificates, fonts, and the resolved DNS configuration. Pass through `LANG`, `LANGUAGE`, and host `LC_*` values without exposing more locale configuration.
 - Provide isolated writable `/tmp` and home/cache/state paths. These are temporary and are not host directories.
 - Allow persistent read/write access only to `$HOME/.config/joplin-desktop`.
-- Create `/tmp/joplin_sharedrop` if needed with owner-only host permissions, and expose it read-only inside the sandbox as `/home/joplin/Sharedrop`. This is a one-way import location: Joplin can read dropped files but cannot modify or export files there, and its contents may be cleared when `/tmp` is cleaned.
-- Allow the active GUI connection only: one Wayland socket (preferred when available) or one local X11 display socket and its optional read-only Xauthority file. Do not expose the rest of the user's home or session runtime sockets.
+- Create `/tmp/joplin_sharedrop` if needed with owner-only host permissions, and expose it read/write inside the sandbox as `/home/joplin/Sharedrop`. This is a two-way exchange location: both the host user and Joplin can read, create, modify and delete files there, and its contents may be cleared when `/tmp` is cleaned.
+- Allow the active GUI connection only: one Wayland socket. X11 is not supported or exposed; the script aborts if no Wayland socket is available. Do not expose the rest of the user's home or session runtime sockets.
+- Additionally unshare the cgroup namespace (when supported), start a new terminal session (`--new-session`), and drop all capabilities.
 - Pass the GNOME GTK theme and color-scheme selection as the `GTK_THEME` environment variable when `gsettings` is available, rather than exposing the user's desktop settings database or D-Bus.
 - Isolate the PID, IPC, and UTS namespaces. Leave the network namespace shared with the host so Joplin Cloud can connect.
 - Bubblewrap cannot limit shared networking to Joplin Cloud. This configuration permits Joplin general network access; restricting it to Cloud requires a separate host firewall or proxy.
 - OpenSnitch may be used as a separate application firewall to allow verified Joplin Cloud destinations and deny other outbound connections (not implemented yet). If doing so, would need to check that it correctly identifies Joplin's processes when launched through Bubblewrap and AppImage extraction before relying on those rules.
-- GPU devices, audio, D-Bus/portals, keyring, notifications, and arbitrary host files are not exposed. Grant them separately only if a needed feature requires them. File import/export outside Joplin's data folder is intentionally unavailable by default.
+- GPU devices, audio, D-Bus/portals, keyring, notifications, and arbitrary host files are not exposed. Grant them separately only if a needed feature requires them. File import/export outside Joplin's data folder and the Sharedrop folder is intentionally unavailable by default.
 - Before launch, the script runs a no-op inside the configured sandbox to verify Bubblewrap mounts and namespace support. The host must permit the namespaces Bubblewrap needs; an installed `bwrap` alone is not sufficient.

@@ -2,7 +2,7 @@
 # Run the verified latest Joplin AppImage in a Bubblewrap sandbox.
 # Sandbox policy: read-only system runtime and AppImage; ephemeral writable home
 # and /tmp; persistent read/write access only to Joplin's data directory; access
-# to one GUI socket; host timezone, locale, and GTK theme values; shared host
+# to one Wayland socket (no X11); host timezone, locale, and GTK theme values; shared host
 # networking, not restricted to Joplin Cloud.
 
 set -Eeuo pipefail
@@ -26,11 +26,23 @@ readonly TAG_REGEX='https://github\.com/laurent22/joplin/releases/tag/v([0-9]+\.
 readonly FILE_REGEX='^Joplin-([0-9]+\.[0-9]+\.[0-9]+)\.AppImage$'
 readonly PROCESS_REGEX='Joplin-[0-9]+\.[0-9]+\.[0-9]+\.AppImage|/opt/Joplin\.AppImage|/\.mount_[Jj]oplin'
 
-for cmd in wget sha512sum sort tail basename pgrep setsid id mkdir chmod sleep readlink bwrap; do
+for cmd in wget sha512sum sort tail basename pgrep setsid id mkdir chmod sleep readlink stat head bwrap; do
     command -v "$cmd" >/dev/null 2>&1 || die "required command not found: $cmd"
 done
 [[ -d "$JOPLIN_DIR" ]] || die "directory not found: $JOPLIN_DIR"
-[[ -d /usr && -d /etc && -d /bin && -d /lib ]] || die "required system runtime directories are missing"
+
+# Target: Ubuntu 24.04+ (merged /usr, so /bin, /lib and /lib64 are symlinks into /usr).
+[[ -r /etc/os-release ]] || die "/etc/os-release is not readable"
+os_id="$(. /etc/os-release && printf '%s' "${ID:-}")"
+os_version="$(. /etc/os-release && printf '%s' "${VERSION_ID:-}")"
+[[ "$os_id" == ubuntu ]] || die "this script targets Ubuntu (found: ${os_id:-unknown})"
+[[ "$os_version" =~ ^[0-9]+\.[0-9]+$ ]] || die "unexpected Ubuntu VERSION_ID: $os_version"
+[[ "$(printf '%s\n24.04\n' "$os_version" | sort -V | head -n 1)" == 24.04 ]] \
+    || die "Ubuntu 24.04 or newer is required (found: $os_version)"
+for link in /bin /lib /lib64; do
+    [[ -L "$link" ]] || die "merged-/usr layout expected, but $link is not a symlink"
+done
+[[ -d /usr && -d /etc ]] || die "required system runtime directories are missing"
 
 # 1. Latest local AppImage, by version in file name.
 declare -a versions=()
@@ -48,6 +60,12 @@ appimage="${JOPLIN_DIR}/Joplin-${local_version}.AppImage"
 sha_file="${appimage}.sha512"
 
 [[ -f "$appimage" && -x "$appimage" ]] || die "AppImage missing or not executable: $appimage"
+# Refuse files that others could have tampered with.
+for f in "$appimage" "$sha_file"; do
+    [[ -f "$f" && ! -L "$f" && -O "$f" ]] || die "must be a regular file owned by the current user (no symlink): $f"
+    mode="$(stat -c '%a' -- "$f")" || die "could not stat $f"
+    (((8#$mode & 8#022) == 0)) || die "file must not be group/world writable ($mode): $f"
+done
 printf 'Latest local AppImage: %s (version %s)\n' "$appimage" "$local_version"
 
 # 2. Verify the matching checksum file has exactly one entry for this AppImage.
@@ -64,7 +82,7 @@ fi
 printf 'sha512 check OK: %s\n' "$sha_out"
 
 # 3. Fetch the latest GitHub release.
-page="$(wget -qO- --timeout=30 --tries=2 "$RELEASES_URL")" || die "wget failed for $RELEASES_URL"
+page="$(wget -qO- --https-only --max-redirect=5 --timeout=30 --tries=2 "$RELEASES_URL")" || die "wget failed for $RELEASES_URL"
 [[ -n "$page" ]] || die "empty response from $RELEASES_URL"
 [[ "$page" =~ $TAG_REGEX ]] || die "no release tag URL found in response from $RELEASES_URL"
 latest_version="${BASH_REMATCH[1]}"
@@ -101,11 +119,11 @@ fi
 chmod 700 -- "$SHARE_DIR" || die "could not restrict sharedrop directory permissions: $SHARE_DIR"
 [[ -r "$SHARE_DIR" && -w "$SHARE_DIR" && -x "$SHARE_DIR" ]] \
     || die "sharedrop directory must be readable and writable by the current user: $SHARE_DIR"
-printf 'Sharedrop: host files in %s are visible to Joplin read-only\n' "$SHARE_DIR"
+printf 'Sharedrop: host files in %s are shared read/write with Joplin\n' "$SHARE_DIR"
 
 resolv_conf="$(readlink -f /etc/resolv.conf)" || die "could not resolve /etc/resolv.conf"
 [[ -r "$resolv_conf" ]] || die "DNS resolver configuration is not readable: $resolv_conf"
-for system_file in /etc/hosts /etc/nsswitch.conf /etc/passwd /etc/group /etc/localtime; do
+for system_file in /etc/hosts /etc/nsswitch.conf /etc/passwd /etc/group /etc/localtime /etc/timezone; do
     [[ -r "$system_file" ]] || die "required system file is not readable: $system_file"
 done
 [[ -d /etc/ssl/certs && -d /etc/fonts ]] || die "required TLS or font configuration is missing"
@@ -168,15 +186,17 @@ declare -a sandbox_args=(
     --unshare-pid
     --unshare-ipc
     --unshare-uts
+    --unshare-cgroup-try
+    --new-session
+    --cap-drop ALL
     --proc /proc
     --dev /dev
     --tmpfs /tmp
     --dir /usr
     --ro-bind /usr /usr
-    --dir /bin
-    --ro-bind /bin /bin
-    --dir /lib
-    --ro-bind /lib /lib
+    --symlink usr/bin /bin
+    --symlink usr/lib /lib
+    --symlink usr/lib64 /lib64
     --dir /etc
     --dir /etc/ssl
     --dir /etc/fonts
@@ -185,6 +205,7 @@ declare -a sandbox_args=(
     --ro-bind /etc/passwd /etc/passwd
     --ro-bind /etc/group /etc/group
     --ro-bind /etc/localtime /etc/localtime
+    --ro-bind /etc/timezone /etc/timezone
     --ro-bind /etc/ssl/certs /etc/ssl/certs
     --ro-bind /etc/fonts /etc/fonts
     --ro-bind "$resolv_conf" /etc/resolv.conf
@@ -193,64 +214,31 @@ declare -a sandbox_args=(
     --dir /home
     --tmpfs "$SANDBOX_HOME"
     --dir "$SANDBOX_SHARE"
-    --ro-bind "$SHARE_DIR" "$SANDBOX_SHARE"
+    --bind "$SHARE_DIR" "$SANDBOX_SHARE"
     --dir "$SANDBOX_CONFIG"
     --bind "$JOPLIN_DATA_DIR" "$SANDBOX_DATA"
     --dir /run
     --dir "$SANDBOX_RUNTIME"
 )
-if [[ -f /etc/timezone ]]; then
-    [[ -r /etc/timezone ]] || die "/etc/timezone is not readable"
-    sandbox_args+=(--ro-bind /etc/timezone /etc/timezone)
-fi
-if [[ -d /lib64 ]]; then
-    sandbox_args+=(--dir /lib64 --ro-bind /lib64 /lib64)
-fi
 
-# Prefer a usable Wayland socket; otherwise allow one local X11 socket.
-declare -a gui_args=()
-declare -a gui_env=()
-gui_backend=""
-if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
-    if [[ "$WAYLAND_DISPLAY" == /* ]]; then
-        wayland_socket="$WAYLAND_DISPLAY"
-    else
-        [[ -n "${XDG_RUNTIME_DIR:-}" ]] || die "XDG_RUNTIME_DIR is required for a relative WAYLAND_DISPLAY"
-        [[ "$WAYLAND_DISPLAY" != */* ]] || die "WAYLAND_DISPLAY must be a socket name or absolute path"
-        wayland_socket="${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}"
-    fi
-    if [[ -S "$wayland_socket" ]]; then
-        sandbox_args+=(--bind "$wayland_socket" "${SANDBOX_RUNTIME}/wayland-0")
-        gui_env+=(--setenv WAYLAND_DISPLAY wayland-0 --setenv XDG_RUNTIME_DIR "$SANDBOX_RUNTIME")
-        gui_args=(--ozone-platform=wayland)
-        gui_backend="Wayland"
-    elif [[ -z "${DISPLAY:-}" ]]; then
-        die "Wayland socket not found: $wayland_socket"
-    else
-        printf 'Wayland socket unavailable; falling back to X11\n'
-    fi
+# Wayland only: expose exactly one Wayland socket; X11 is never exposed.
+[[ -n "${WAYLAND_DISPLAY:-}" ]] || die "WAYLAND_DISPLAY is not set; a Wayland session is required"
+if [[ "$WAYLAND_DISPLAY" == /* ]]; then
+    wayland_socket="$WAYLAND_DISPLAY"
+else
+    [[ -n "${XDG_RUNTIME_DIR:-}" ]] || die "XDG_RUNTIME_DIR is required for a relative WAYLAND_DISPLAY"
+    [[ "$WAYLAND_DISPLAY" != */* ]] || die "WAYLAND_DISPLAY must be a socket name or absolute path"
+    wayland_socket="${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}"
 fi
-
-if [[ "$gui_backend" != "Wayland" ]]; then
-    [[ -n "${DISPLAY:-}" ]] || die "neither a usable Wayland socket nor DISPLAY is available"
-    [[ "$DISPLAY" =~ ^(unix/)?(unix:|:)([0-9]+)(\.[0-9]+)?$ ]] \
-        || die "only local X11 DISPLAY values are supported: $DISPLAY"
-    x_socket="/tmp/.X11-unix/X${BASH_REMATCH[3]}"
-    [[ -S "$x_socket" ]] || die "X11 display socket not found: $x_socket"
-    sandbox_args+=(--dir /tmp/.X11-unix --bind "$x_socket" "$x_socket")
-    gui_env+=(--setenv DISPLAY "$DISPLAY")
-
-    xauthority="${XAUTHORITY:-${HOME}/.Xauthority}"
-    if [[ -n "${XAUTHORITY:-}" && ! -r "$xauthority" ]]; then
-        die "XAUTHORITY is not readable: $xauthority"
-    elif [[ -r "$xauthority" ]]; then
-        sandbox_args+=(--ro-bind "$xauthority" "${SANDBOX_RUNTIME}/Xauthority")
-        gui_env+=(--setenv XAUTHORITY "${SANDBOX_RUNTIME}/Xauthority")
-    fi
-    gui_args=()
-    gui_backend="X11"
-fi
-printf 'GUI access: %s\n' "$gui_backend"
+[[ -S "$wayland_socket" ]] || die "Wayland socket not found: $wayland_socket"
+sandbox_args+=(--bind "$wayland_socket" "${SANDBOX_RUNTIME}/wayland-0")
+declare -a gui_env=(
+    --setenv WAYLAND_DISPLAY wayland-0
+    --setenv XDG_RUNTIME_DIR "$SANDBOX_RUNTIME"
+    --setenv GDK_BACKEND wayland
+)
+declare -a gui_args=(--ozone-platform=wayland)
+printf 'GUI access: Wayland (%s)\n' "$wayland_socket"
 
 # The host-side log is not exposed inside the sandbox.
 state_home="${XDG_STATE_HOME:-${HOME}/.local/state}"
