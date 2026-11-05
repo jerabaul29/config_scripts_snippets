@@ -48,7 +48,7 @@ work_dir=""
 status_probe_pid=""
 cleanup() {
     if [[ -n "${status_probe_pid:-}" ]]; then
-        kill "$status_probe_pid" 2>/dev/null || true
+        kill -KILL "$status_probe_pid" 2>/dev/null || true
         status_probe_pid=""
     fi
     if [[ -n "${work_dir:-}" ]]; then
@@ -646,14 +646,16 @@ check_status_channel() {
     kill -0 "$child_pid" 2>/dev/null \
         || die "status fd child PID $child_pid is not alive in the host pid namespace"
     # argv[0] is bwrap for the sandbox supervisor. Do not signal anything else.
-    cmdline="$(<"/proc/${child_pid}/cmdline")" || die "could not read status-fd child cmdline"
+    # cmdline is NUL-separated; read only argv[0].
+    IFS= read -r -d '' cmdline <"/proc/${child_pid}/cmdline" || die "could not read status-fd child cmdline"
     [[ "$cmdline" == *bwrap* ]] || die "refusing to signal pid $child_pid (not bubblewrap)"
     child_ns="$(readlink "/proc/${child_pid}/ns/pid")" || die "could not read status-fd child pid namespace"
     host_ns="$(readlink /proc/self/ns/pid)" || die "could not read host pid namespace"
     [[ "$child_ns" != "$host_ns" ]] || die "status fd PID $child_pid is not in an isolated pid namespace"
 
     status_probe_pid="$child_pid"
-    kill "$child_pid" 2>/dev/null || die "could not stop status-fd preflight (pid $child_pid)"
+    # The pid is init of the sandbox pid namespace: it ignores SIGTERM from outside, so use SIGKILL.
+    kill -KILL "$child_pid" 2>/dev/null || die "could not stop status-fd preflight (pid $child_pid)"
     for _ in 1 2 3 4 5 6 7 8; do
         kill -0 "$child_pid" 2>/dev/null || break
         sleep 0.25
