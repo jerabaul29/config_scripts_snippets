@@ -1,11 +1,26 @@
 #!/usr/bin/env bash
 # Run the verified, up-to-date Joplin AppImage in a Bubblewrap sandbox.
-# Target: Ubuntu 24.04+ with a Wayland session. See AGENTS.md (kept in sync).
+# Target: Ubuntu 24.04+ and a Wayland session only. See AGENTS.md (kept in sync).
 # Sandbox policy: read-only /usr and a private copy of the AppImage; synthetic
 # minimal /etc identity files; ephemeral size-capped home and /tmp; persistent
 # read/write access only to Joplin's data directory and the Sharedrop folder;
 # one Wayland socket (no X11, GPU, audio, D-Bus); memory-capped systemd scope;
 # shared host networking, not restricted to Joplin Cloud.
+#
+# Assumptions checked in code before launch (abort if any is false):
+# - Not root. HOME and the Joplin directory are real, user-owned, not group/world writable.
+# - Ubuntu 24.04 or newer only (ID=ubuntu, VERSION_ID >= 24.04). ID_LIKE is not accepted.
+# - Wayland only: XDG_SESSION_TYPE=wayland, plain WAYLAND_DISPLAY, owned non-symlink socket.
+# - Merged /usr. systemd-resolved is active and its stub nameserver is 127.0.0.53.
+# - XDG_RUNTIME_DIR is a real user-owned directory and not group/world accessible.
+# - bwrap is not setuid/setgid and supports every flag this script passes.
+# - wget supports --https-only/--no-config/--no-proxy/--no-netrc (direct HTTPS; no ~/.wgetrc).
+# - sha512sum supports --strict; sort -V is version sort; setsid supports -f; pgrep exits 1
+#   when nothing matches.
+# - Sandbox uid/gid are pinned to the invoking user (--uid/--gid), never left at bwrap's default.
+# - user/pid/ipc/uts/cgroup namespaces are isolated; the network namespace is the host's.
+# - Capabilities are dropped; /usr is read-only; no GPU, audio, X11, or D-Bus; synthetic /etc only.
+# - --json-status-fd 3 survives setsid and systemd-run and names a live host pid in the sandbox.
 #
 # After any edit, run (all must pass with no output):
 #   bash -n joplin_run.sh                    # syntax check
@@ -30,12 +45,19 @@ die() {
 trap 'die "command failed at line ${LINENO}: ${BASH_COMMAND}"' ERR
 
 work_dir=""
+status_probe_pid=""
 cleanup() {
-    if [[ -n "$work_dir" ]]; then
+    if [[ -n "${status_probe_pid:-}" ]]; then
+        kill "$status_probe_pid" 2>/dev/null || true
+        status_probe_pid=""
+    fi
+    if [[ -n "${work_dir:-}" ]]; then
         rm -rf -- "$work_dir" || true
     fi
 }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 readonly JOPLIN_DIR="${HOME:-}/Desktop/Software/Joplin"
 readonly JOPLIN_DATA_DIR="${HOME:-}/.config/joplin-desktop"
@@ -57,7 +79,8 @@ readonly SANDBOX_CONFIG="${SANDBOX_HOME}/.config"
 readonly SANDBOX_DATA="${SANDBOX_CONFIG}/joplin-desktop"
 readonly SANDBOX_SHARE="${SANDBOX_HOME}/Sharedrop"
 readonly SANDBOX_RUNTIME="/run/joplin"
-readonly WGET_OPTS=(--no-config --https-only --max-redirect=5 --timeout=30 --tries=2 -nv -O-)
+# Direct HTTPS only: no wgetrc, no proxy, no .netrc credentials.
+readonly WGET_OPTS=(--no-config --https-only --no-proxy --no-netrc --max-redirect=5 --timeout=30 --tries=2 -nv -O-)
 readonly REQUIRED_COMMANDS=(wget sha512sum sort tail pgrep setsid id mkdir mktemp cp chmod stat rm mv sleep
     flock readlink timeout gsettings systemd-run bwrap systemctl head)
 
@@ -85,9 +108,15 @@ require_not_shared_writable() {
 }
 
 fetch() {
+    # Direct HTTPS: wgetrc is disabled by WGET_OPTS, and proxy variables are removed
+    # for this process so they cannot redirect the release check.
     local err_file out rc=0
     err_file="$(mktemp -- "${XDG_RUNTIME_DIR}/joplin_wget.XXXXXX")"
-    out="$(wget "${WGET_OPTS[@]}" "$1" 2>"$err_file")" || rc=$?
+    out="$(/usr/bin/env \
+        -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY \
+        -u all_proxy -u ALL_PROXY -u ftp_proxy -u FTP_PROXY \
+        -u no_proxy -u NO_PROXY \
+        wget "${WGET_OPTS[@]}" "$1" 2>"$err_file")" || rc=$?
     if ((rc != 0)); then
         local err
         err="$(head -c 500 -- "$err_file")"
@@ -108,17 +137,62 @@ parse_single_checksum() {
 
 # --- steps -----------------------------------------------------------------
 
+# Flags and tool behaviour this script relies on. Help text and a few dry runs,
+# not "the binary exists".
+check_tool_assumptions() {
+    local bwrap_path bwrap_mode help flag rc=0
+
+    bwrap_path="$(command -v bwrap)" || die "required command not found: bwrap"
+    bwrap_path="$(readlink -f -- "$bwrap_path")" || die "could not resolve bwrap"
+    [[ -f "$bwrap_path" && ! -L "$bwrap_path" ]] || die "bwrap is not a regular file: $bwrap_path"
+    bwrap_mode="$(stat -c '%a' -- "$bwrap_path")" || die "could not stat $bwrap_path"
+    # A setuid bwrap would change the privilege model this script assumes.
+    (((8#$bwrap_mode & 8#6000) == 0)) || die "bwrap must not be setuid or setgid (mode $bwrap_mode): $bwrap_path"
+
+    help="$(bwrap --help 2>&1)" || die "bwrap --help failed"
+    for flag in --json-status-fd --unshare-user --unshare-pid --unshare-ipc --unshare-uts \
+        --unshare-cgroup --cap-drop --uid --gid --size --perms --new-session --hostname; do
+        [[ "$help" == *"$flag"* ]] || die "installed bwrap does not support $flag"
+    done
+
+    help="$(wget --help 2>&1)" || die "wget --help failed"
+    for flag in --https-only --no-config --no-proxy --no-netrc; do
+        [[ "$help" == *"$flag"* ]] || die "wget does not support $flag"
+    done
+
+    help="$(sha512sum --help 2>&1)" || die "sha512sum --help failed"
+    [[ "$help" == *--strict* ]] || die "sha512sum does not support --strict"
+
+    help="$(setsid --help 2>&1)" || die "setsid --help failed"
+    [[ "$help" == *"--fork"* ]] || die "setsid does not support -f/--fork (util-linux setsid is required)"
+
+    [[ "$(printf '1.2\n1.10\n' | LC_ALL=C sort -V | tail -n 1)" == "1.10" ]] \
+        || die "sort -V is not version sort (1.10 should sort after 1.2)"
+
+    # The bracket expression cannot match pgrep's own command line. Exit 1 means not running.
+    pgrep -u "$(id -u)" -f '[j]oplin_run_absent_probe' >/dev/null 2>&1 || rc=$?
+    ((rc == 1)) || die "pgrep must exit 1 when no process matches (got $rc)"
+
+    [[ -x /usr/bin/env && -x /usr/bin/sh && -x /usr/bin/true && -x /usr/bin/sleep && -x /usr/bin/stat ]] \
+        || die "required runtime binaries missing under /usr/bin (env, sh, true, sleep, stat)"
+}
+
 check_platform() {
+    # Not root. HOME must be a real directory we own, not a symlink and not group/world writable.
     ((EUID != 0)) || die "refusing to run as root"
-    [[ "${HOME:-}" == /* && -d "$HOME" ]] || die "HOME is not set to an existing absolute directory"
+    [[ "${HOME:-}" == /* ]] || die "HOME is not set to an absolute directory"
+    require_real_dir "$HOME"
+    require_not_shared_writable "$HOME"
 
     local cmd
     for cmd in "${REQUIRED_COMMANDS[@]}"; do
         command -v "$cmd" >/dev/null 2>&1 || die "required command not found: $cmd"
     done
     [[ -d "$JOPLIN_DIR" ]] || die "directory not found: $JOPLIN_DIR"
+    require_real_dir "$JOPLIN_DIR"
+    require_not_shared_writable "$JOPLIN_DIR"
 
-    # Ubuntu 24.04+ with a merged /usr (/bin, /lib and /lib64 are symlinks into /usr).
+    # Ubuntu 24.04+ only. A derivative that sets ID_LIKE=ubuntu but not ID=ubuntu is rejected.
     [[ -r /etc/os-release ]] || die "/etc/os-release is not readable"
     local key value os_id="" os_version=""
     while IFS='=' read -r key value; do
@@ -130,7 +204,9 @@ check_platform() {
     done </etc/os-release
     [[ "$os_id" == ubuntu ]] || die "this script targets Ubuntu (found: ${os_id:-unknown})"
     [[ "$os_version" =~ ^[0-9]+\.[0-9]+$ ]] || die "unexpected Ubuntu VERSION_ID: $os_version"
-    ((10#${os_version%%.*} >= 24)) || die "Ubuntu 24.04 or newer is required (found: $os_version)"
+    local major="${os_version%%.*}" minor="${os_version#*.}"
+    ((10#$major > 24 || (10#$major == 24 && 10#$minor >= 4))) \
+        || die "Ubuntu 24.04 or newer is required (found: $os_version)"
 
     local link
     for link in /bin /lib /lib64; do
@@ -141,21 +217,35 @@ check_platform() {
     [[ -d /etc/ssl/certs && -d /etc/fonts && -r /etc/localtime ]] \
         || die "required system files are missing: /etc/ssl/certs, /etc/fonts or /etc/localtime"
     # systemd-resolved stub resolver (Ubuntu default); the sandbox gets a synthetic resolv.conf for it.
-    [[ "$(readlink -f /etc/resolv.conf)" == /run/systemd/resolve/stub-resolv.conf ]] \
+    local stub line found=0
+    stub="$(readlink -f -- /etc/resolv.conf)" || die "could not resolve /etc/resolv.conf"
+    [[ "$stub" == /run/systemd/resolve/stub-resolv.conf ]] \
         || die "/etc/resolv.conf must point to the systemd-resolved stub (Ubuntu default)"
+    while IFS= read -r line; do
+        [[ "$line" == "nameserver 127.0.0.53" ]] && found=1
+    done <"$stub"
+    ((found == 1)) || die "systemd-resolved stub does not list nameserver 127.0.0.53"
     systemctl is-active --quiet systemd-resolved || die "systemd-resolved is not active"
+
+    check_tool_assumptions
 }
 
 # A Wayland session and a private runtime directory are required; take the single-instance lock.
+# X11 is not supported: any other session type, an absolute WAYLAND_DISPLAY, or a
+# missing, unowned, or symlinked socket aborts. DISPLAY is cleared before launch.
 check_session() {
-    [[ "${XDG_RUNTIME_DIR:-}" == /* && -d "$XDG_RUNTIME_DIR" && -O "$XDG_RUNTIME_DIR" ]] \
-        || die "XDG_RUNTIME_DIR must be an absolute directory owned by the current user"
+    [[ "${XDG_RUNTIME_DIR:-}" == /* ]] || die "XDG_RUNTIME_DIR must be an absolute path"
+    require_real_dir "$XDG_RUNTIME_DIR"
+    local runtime_mode
+    runtime_mode="$(stat -c '%a' -- "$XDG_RUNTIME_DIR")" || die "could not stat $XDG_RUNTIME_DIR"
+    (((8#$runtime_mode & 8#077) == 0)) \
+        || die "XDG_RUNTIME_DIR must not be group/world accessible ($runtime_mode): $XDG_RUNTIME_DIR"
     [[ "${XDG_SESSION_TYPE:-}" == wayland ]] || die "a Wayland session is required (XDG_SESSION_TYPE=${XDG_SESSION_TYPE:-unset})"
     [[ "${WAYLAND_DISPLAY:-}" =~ ^[A-Za-z0-9_-]+$ ]] \
-        || die "WAYLAND_DISPLAY must be a plain socket name like wayland-0 (a Wayland session is required)"
+        || die "WAYLAND_DISPLAY must be a plain socket name like wayland-0 (a Wayland session is required; X11 is not supported)"
     wayland_socket="${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}"
-    [[ -S "$wayland_socket" && -O "$wayland_socket" ]] \
-        || die "Wayland socket not found or not owned by the current user: $wayland_socket"
+    [[ ! -L "$wayland_socket" && -S "$wayland_socket" && -O "$wayland_socket" ]] \
+        || die "Wayland socket not found, not owned by the current user, or is a symlink: $wayland_socket"
 
     # The lock is not inherited by Joplin (see launch).
     exec {lock_fd}>"${XDG_RUNTIME_DIR}/joplin_run.lock"
@@ -341,6 +431,10 @@ build_sandbox() {
 
     sandbox_args=(
         --unshare-user
+        # Do not trust bwrap's default uid map. Pin both ids so they match the
+        # synthetic passwd; a uid of 0 would make Electron treat itself as root.
+        --uid "$(id -u)"
+        --gid "$(id -g)"
         --unshare-pid
         --unshare-ipc
         --unshare-uts
@@ -369,23 +463,217 @@ build_sandbox() {
         --bind "$JOPLIN_DATA_DIR" "$SANDBOX_DATA"
         --perms 0700 --dir "$SANDBOX_RUNTIME"
         --bind "$wayland_socket" "${SANDBOX_RUNTIME}/wayland-0"
+        # No --unshare-net: the network namespace stays shared. --share-net is not
+        # passed; this bwrap accepts it only together with --unshare-all. The
+        # preflight aborts if the network namespace is not the host's.
     )
     scope_cmd=(systemd-run --user --scope --quiet -p "MemoryMax=${MEMORY_MAX}" -p MemorySwapMax=0 -p "TasksMax=${TASKS_MAX}" --)
     printf 'GUI access: Wayland (%s)\n' "$wayland_socket"
 }
 
-# Exercise the exact mounts, namespaces and memory scope before launching the AppImage.
+# Probe run inside the configured sandbox. /bin/sh is dash; keep this POSIX.
+write_sandbox_probe() {
+    cat >"${work_dir}/probe.sh" <<'EOF'
+set -eu
+fail() {
+    printf 'sandbox check failed: %s\n' "$1" >&2
+    exit 1
+}
+[ "$#" -eq 13 ] || fail "internal error: expected 13 arguments, got $#"
+
+uid=$(id -u)
+gid=$(id -g)
+[ "$uid" = "$1" ] || fail "uid is ${uid}, expected ${1}"
+[ "$gid" = "$2" ] || fail "gid is ${gid}, expected ${2}"
+[ "$uid" != 0 ] || fail "uid is 0; refusing to run as root inside the sandbox"
+
+host_name=""
+read -r host_name </proc/sys/kernel/hostname || fail "could not read sandbox hostname"
+[ "$host_name" = joplin ] || fail "hostname is ${host_name}, expected joplin"
+
+cap=""
+while read -r key val _; do
+    if [ "$key" = "CapEff:" ]; then
+        cap=$val
+    fi
+done </proc/self/status
+[ -n "$cap" ] || fail "CapEff is missing"
+case "$cap" in
+    *[!0]*) fail "capabilities are not dropped (CapEff=${cap})" ;;
+esac
+
+[ "$(readlink /proc/self/ns/net)" = "$3" ] || fail "network namespace is not shared with the host"
+[ "$(readlink /proc/self/ns/pid)" != "$4" ] || fail "pid namespace is not isolated"
+[ "$(readlink /proc/self/ns/ipc)" != "$5" ] || fail "ipc namespace is not isolated"
+[ "$(readlink /proc/self/ns/uts)" != "$6" ] || fail "uts namespace is not isolated"
+[ "$(readlink /proc/self/ns/user)" != "$7" ] || fail "user namespace is not isolated"
+[ "$(readlink /proc/self/ns/cgroup)" != "$8" ] || fail "cgroup namespace is not isolated"
+
+passwd_line=""
+read -r passwd_line </etc/passwd || fail "could not read /etc/passwd"
+[ "$passwd_line" = "joplin:x:${uid}:${gid}:joplin:/home/joplin:/usr/sbin/nologin" ] \
+    || fail "unexpected /etc/passwd: ${passwd_line}"
+group_line=""
+read -r group_line </etc/group || fail "could not read /etc/group"
+[ "$group_line" = "joplin:x:${gid}:" ] || fail "unexpected /etc/group: ${group_line}"
+
+line_no=0
+while IFS= read -r line; do
+    line_no=$((line_no + 1))
+    case "$line_no" in
+        1) [ "$line" = "127.0.0.1 localhost" ] || fail "unexpected /etc/hosts line 1: ${line}" ;;
+        2) [ "$line" = "::1 localhost" ] || fail "unexpected /etc/hosts line 2: ${line}" ;;
+        *) fail "unexpected extra /etc/hosts line: ${line}" ;;
+    esac
+done </etc/hosts
+[ "$line_no" -eq 2 ] || fail "/etc/hosts has ${line_no} lines, expected 2"
+
+line_no=0
+while IFS= read -r line; do
+    line_no=$((line_no + 1))
+    case "$line_no" in
+        1) [ "$line" = "nameserver 127.0.0.53" ] || fail "unexpected resolv.conf line 1: ${line}" ;;
+        2) [ "$line" = "options edns0 trust-ad" ] || fail "unexpected resolv.conf line 2: ${line}" ;;
+        *) fail "unexpected extra resolv.conf line: ${line}" ;;
+    esac
+done </etc/resolv.conf
+[ "$line_no" -eq 2 ] || fail "resolv.conf has ${line_no} lines, expected 2"
+
+line_no=0
+while IFS= read -r line; do
+    line_no=$((line_no + 1))
+    case "$line_no" in
+        1) [ "$line" = "passwd: files" ] || fail "unexpected nsswitch line 1: ${line}" ;;
+        2) [ "$line" = "group: files" ] || fail "unexpected nsswitch line 2: ${line}" ;;
+        3) [ "$line" = "hosts: files dns" ] || fail "unexpected nsswitch line 3: ${line}" ;;
+        *) fail "unexpected extra nsswitch line: ${line}" ;;
+    esac
+done </etc/nsswitch.conf
+[ "$line_no" -eq 3 ] || fail "nsswitch.conf has ${line_no} lines, expected 3"
+
+[ ! -e "$9" ] || fail "host path is visible inside the sandbox: $9"
+[ ! -e /dev/dri ] || fail "GPU device /dev/dri is exposed"
+[ ! -e /dev/nvidiactl ] || fail "GPU device /dev/nvidiactl is exposed"
+[ ! -e /dev/snd ] || fail "audio device /dev/snd is exposed"
+[ ! -d /tmp/.X11-unix ] || fail "X11 socket directory is exposed"
+[ ! -e /run/dbus ] || fail "D-Bus system socket directory is exposed"
+[ ! -S /run/joplin/bus ] || fail "session D-Bus socket is exposed"
+[ -w "$10" ] || fail "data directory is not writable"
+[ -w "$11" ] || fail "Sharedrop is not writable"
+[ -w "$12" ] || fail "sandbox home is not writable"
+[ -w /tmp ] || fail "/tmp is not writable"
+[ -S "$13" ] || fail "Wayland socket is missing in the sandbox"
+[ -L /bin ] && [ "$(readlink /bin)" = usr/bin ] || fail "/bin is not a symlink to usr/bin"
+[ -L /lib ] && [ "$(readlink /lib)" = usr/lib ] || fail "/lib is not a symlink to usr/lib"
+[ -L /lib64 ] && [ "$(readlink /lib64)" = usr/lib64 ] || fail "/lib64 is not a symlink to usr/lib64"
+
+usr_opts=""
+while read -r _src dest _fstype opts _rest; do
+    if [ "$dest" = "/usr" ]; then
+        usr_opts=$opts
+    fi
+done </proc/mounts
+[ -n "$usr_opts" ] || fail "/usr is not mounted"
+case ",${usr_opts}," in
+    *,ro,*) ;;
+    *) fail "/usr is not read-only (${usr_opts})" ;;
+esac
+
+mode=$(stat -c %a /run/joplin) || fail "could not stat /run/joplin"
+case "$mode" in
+    700 | 0700) ;;
+    *) fail "/run/joplin mode is ${mode}, expected 700" ;;
+esac
+EOF
+}
+
+run_sandbox_probe() {
+    local host_net host_pid host_ipc host_uts host_user host_cgroup out
+    host_net="$(readlink /proc/self/ns/net)" || die "could not read host network namespace"
+    host_pid="$(readlink /proc/self/ns/pid)" || die "could not read host pid namespace"
+    host_ipc="$(readlink /proc/self/ns/ipc)" || die "could not read host ipc namespace"
+    host_uts="$(readlink /proc/self/ns/uts)" || die "could not read host uts namespace"
+    host_user="$(readlink /proc/self/ns/user)" || die "could not read host user namespace"
+    host_cgroup="$(readlink /proc/self/ns/cgroup)" || die "could not read host cgroup namespace"
+
+    if ! out="$(bwrap "${sandbox_args[@]}" \
+        --ro-bind "${work_dir}/probe.sh" /opt/probe.sh \
+        "${sandbox_env[@]}" \
+        -- /usr/bin/sh /opt/probe.sh \
+        "$(id -u)" "$(id -g)" \
+        "$host_net" "$host_pid" "$host_ipc" "$host_uts" "$host_user" "$host_cgroup" \
+        "$JOPLIN_DIR" \
+        "$SANDBOX_DATA" "$SANDBOX_SHARE" "$SANDBOX_HOME" \
+        "${SANDBOX_RUNTIME}/wayland-0" \
+        2>&1)"; then
+        die "sandbox assumption checks failed; check user-namespace support (Ubuntu AppArmor): ${out:-bwrap exited non-zero}"
+    fi
+}
+
+# Same supervisor chain as launch: setsid -f, systemd-run --scope, bwrap fd 3.
+# Confirms the reported child PID is a live host PID inside the sandbox, then stops it.
+check_status_channel() {
+    local status_file="${work_dir}/preflight-status.json"
+    local err_file="${work_dir}/preflight-status.err"
+    : >"$status_file" || die "could not create status-fd preflight file"
+    : >"$err_file" || die "could not create status-fd preflight log"
+
+    setsid -f "${scope_cmd[@]}" bwrap \
+        "${sandbox_args[@]}" \
+        --json-status-fd 3 \
+        "${sandbox_env[@]}" \
+        -- /usr/bin/sleep 20 \
+        3>"$status_file" {lock_fd}>&- </dev/null >/dev/null 2>"$err_file" \
+        || die "could not start status-fd preflight"
+
+    local status="" child_pid="" cmdline="" child_ns="" host_ns="" _
+    local pid_regex='"child-pid":[[:space:]]*([0-9]+)'
+    for _ in 1 2 3 4 5 6 7 8; do
+        sleep 0.5
+        status="$(<"$status_file")"
+        if [[ "$status" =~ $pid_regex ]]; then
+            child_pid="${BASH_REMATCH[1]}"
+            break
+        fi
+    done
+    if [[ -z "$child_pid" ]]; then
+        local err
+        err="$(head -c 500 -- "$err_file")"
+        die "bwrap did not report a host child PID through systemd-run fd 3: ${err:-${status:-empty}}"
+    fi
+    [[ "$child_pid" != "$$" && "$child_pid" != 1 ]] \
+        || die "status fd reported an unexpected pid: $child_pid"
+    kill -0 "$child_pid" 2>/dev/null \
+        || die "status fd child PID $child_pid is not alive in the host pid namespace"
+    # argv[0] is bwrap for the sandbox supervisor. Do not signal anything else.
+    cmdline="$(<"/proc/${child_pid}/cmdline")" || die "could not read status-fd child cmdline"
+    [[ "$cmdline" == *bwrap* ]] || die "refusing to signal pid $child_pid (not bubblewrap)"
+    child_ns="$(readlink "/proc/${child_pid}/ns/pid")" || die "could not read status-fd child pid namespace"
+    host_ns="$(readlink /proc/self/ns/pid)" || die "could not read host pid namespace"
+    [[ "$child_ns" != "$host_ns" ]] || die "status fd PID $child_pid is not in an isolated pid namespace"
+
+    status_probe_pid="$child_pid"
+    kill "$child_pid" 2>/dev/null || die "could not stop status-fd preflight (pid $child_pid)"
+    for _ in 1 2 3 4 5 6 7 8; do
+        kill -0 "$child_pid" 2>/dev/null || break
+        sleep 0.25
+    done
+    if kill -0 "$child_pid" 2>/dev/null; then
+        die "status-fd preflight pid $child_pid did not exit"
+    fi
+    status_probe_pid=""
+}
+
+# Exercise the exact mounts, namespaces, uid map and status fd before launching Joplin.
 preflight() {
     local out
     if ! out="$("${scope_cmd[@]}" /usr/bin/true 2>&1)"; then
         die "systemd user scope with a memory limit is not available: $out"
     fi
-    # shellcheck disable=SC2016 # $1..$4 expand inside the sandbox shell
-    if ! out="$(bwrap "${sandbox_args[@]}" "${sandbox_env[@]}" -- /usr/bin/sh -c \
-        'test -w "$1" && test -w "$2" && test -w "$3" && test -w /tmp && test -S "$4"' \
-        sh "$SANDBOX_DATA" "$SANDBOX_SHARE" "$SANDBOX_HOME" "${SANDBOX_RUNTIME}/wayland-0" 2>&1)"; then
-        die "Bubblewrap preflight failed; check user-namespace support (Ubuntu AppArmor) and mounts: $out"
-    fi
+    write_sandbox_probe
+    run_sandbox_probe
+    check_status_channel
+    printf 'Confirmed: sandbox assumptions hold\n'
 }
 
 # 7. Launch detached. Extract-and-run avoids requiring FUSE inside the sandbox.
