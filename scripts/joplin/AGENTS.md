@@ -1,8 +1,8 @@
 # Script for good practice run of Joplin AppImage
 
-This should describe how to design a small bash script compatible with modern Ubuntu distros. The script should be in this folder, self contained, and named: `joplin_run.sh` .
+This should describe how to design a small bash script compatible with modern Ubuntu distros (24 and newer, wayland only). The script should be in this folder, self contained, and named: `joplin_run.sh` .
 
-The goal of the script is to make it easier to use Joplin in a safe way: making sure it is updated, and running well isolated with minimum sets of rights with bubblewrap.
+The goal of the script is to make it easier to use Joplin in a safe way: making sure it is updated, and running well isolated with minimum sets of rights with bubblewrap. All assumptions should be documented in comments and code as necessary. Any issue or non fulfilled assumption should result in crash, abort, error code, and print an explanation comment
 
 Make sure the .sh script and this .md file are kept in sync and reflecting each other.
 
