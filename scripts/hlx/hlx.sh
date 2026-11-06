@@ -7,6 +7,13 @@
 #   HLX_NO_SANDBOX=1 hlx ...   run unsandboxed (needed e.g. for `--grammar fetch`, or to edit
 #                              protected files such as the helix config itself)
 #
+# INSTALL
+#   Add an alias to ~/.bashrc (adjust the path to where this script lives):
+#     alias hlx='$HOME/path/to/scripts/hlx/hlx.sh'
+#   Aliases only work in interactive shells; for non-interactive use (e.g. EDITOR=hlx git
+#   commit) symlink the script into a PATH dir instead: ln -s /path/to/hlx.sh ~/.local/bin/hlx
+#   Then create ~/.config/hlx/hlx.conf from hlx.conf.example and set HELIX_APPIMAGE.
+#
 # WHAT THE SANDBOX ALLOWS
 #   - no network, no IPC, own PID namespace, new session (blocks TIOCSTI), cleared environment
 #   - read-only: the extracted AppImage, the helix config, conda/mamba/venv prefixes, EXTRA_RO
