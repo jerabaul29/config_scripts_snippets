@@ -1,0 +1,4 @@
+#!/bin/sh
+# Sandbox stand-in for wl-paste (HLX_CLIPBOARD=osc52): reading the clipboard is not allowed.
+echo "hlx: reading the clipboard is disabled in the sandbox; paste with the terminal" >&2
+exit 1

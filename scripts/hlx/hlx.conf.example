@@ -1,0 +1,13 @@
+# Copy to ~/.config/hlx/hlx.conf (sourced by hlx.sh as bash, outside the sandbox).
+# Everything is optional except HELIX_APPIMAGE; see the header of hlx.sh.
+
+HELIX_APPIMAGE="$HOME/path/to/helix-25.07.1-x86_64.AppImage"
+
+# HELIX_CONFIG_DIR="$HOME/.config/helix"
+# SANDBOX_CACHE_DIR="$HOME/.cache/hlx-sandbox"
+# CONDA_DIRS=("$HOME/conda")        # replaces the default list
+# EXTRA_RO=("$HOME/.cargo/bin")     # e.g. locally installed language servers
+# EXTRA_RW=()                       # e.g. language server caches
+# PASS_ENV=(RUST_LOG)               # extra variables to pass through
+# DENY_PATHS+=("$HOME/secrets")     # append to the default deny list
+# HLX_CLIPBOARD=osc52               # wayland (default) | osc52 | off
