@@ -11,5 +11,6 @@ shopt -s nullglob
 # - also have a config array of paths to e.g. lsps, that can be maintained for example by the user, that is read only
 # - everything else is off-borders
 # - a compromised or malicious helix should not be able to read any sensitive file, even less write them, and should  not be able to exfiltrate anything
+# - all lsps used should be local only anyways, so no loss of functionality
 /home/jeanr/Desktop/Software/HelixEditor/helix-25.07.1-x86_64.AppImage
 
