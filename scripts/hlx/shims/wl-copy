@@ -1,6 +1,17 @@
 #!/bin/sh
 # Sandbox stand-in for wl-copy (HLX_CLIPBOARD=osc52): hands the selection to the terminal
 # as an OSC 52 sequence. Helix runs this with its stdout still attached to the terminal.
+# Accepted leak (see THREAT MODEL in hlx.sh): the sandbox can set the host clipboard.
+# Arguments (--primary, --type, --clear) are ignored: everything goes to the clipboard.
+# Many terminals silently drop OSC 52 payloads above roughly 100 KB. Yanks over 1 MiB are refused so a compromised editor cannot flood the terminal.
 tty="/proc/$PPID/fd/1"
 [ -w "$tty" ] || exit 1
-printf '\033]52;c;%s\a' "$(base64 -w0)" >"$tty"
+tmp=$(mktemp) || exit 1
+trap 'rm -f "$tmp"' EXIT
+# one byte past the cap, so an oversized yank is refused rather than silently cut
+head -c 1048577 >"$tmp" || exit 1
+if [ "$(wc -c <"$tmp")" -gt 1048576 ]; then
+	echo "hlx: yank larger than 1 MiB is refused" >&2
+	exit 1
+fi
+printf '\033]52;c;%s\a' "$(base64 -w0 <"$tmp")" >"$tty"

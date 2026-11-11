@@ -11,6 +11,9 @@ HELIX_APPIMAGE="$HOME/path/to/helix-25.07.1-x86_64.AppImage"
 # PASS_ENV=(RUST_LOG)               # extra variables to pass through
 # DENY_PATHS+=("$HOME/secrets")     # append to the default deny list
 # SECCOMP_ALLOW=(personality)       # syscalls from seccomp.py's deny list to allow again
+#                                   # do not add link or linkat unless a tool breaks (hlx.sh LINKS)
 # HLX_SECCOMP=on                    # on (default) | off
 # HLX_CLIPBOARD=wayland             # osc52 (default) | wayland | off
 # HLX_NEW_SESSION=off               # on (default) | off: off lets terminal resize/Ctrl-Z reach helix
+# HLX_ALLOW_SECRETS=1               # 1: do not mask .env / *.pem / *.key files in opened folders
+# HLX_CHECKS=on                     # on (default) | off: startup warnings for old bwrap / link sysctls

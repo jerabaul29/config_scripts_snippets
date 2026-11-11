@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 # Runs INSIDE the hlx sandbox (started by `hlx --self-test`, which also checks the host side
-# afterwards). Every line of output is one test: "ok" when the sandbox behaves as intended.
+# afterwards). Every "ok"/"FAIL" line is one test; "ok" when the sandbox behaves as intended.
 #
 # Two helpers keep the tests easy to read:
 #   allowed "what should work"  COMMAND...   passes when COMMAND succeeds
 #   blocked "what must fail"    COMMAND...   passes when COMMAND fails
 #
-# The paths below are set up by hlx.sh in a throwaway git repository under /tmp:
+# The paths below are set up by hlx.sh in a throwaway git repository next to the sandbox
+# cache directory (a host path, not the sandbox's /tmp):
 #   HLX_ST_REPO     the repository (opened folder is its sub/ directory -> repo is read-only)
 #   HLX_ST_SUB      the opened folder, the only writable place
 #   HLX_ST_OUTSIDE  a host directory next to the repo that is NOT shared with the sandbox
 #   HLX_ST_DENIED   a file inside the opened folder that is listed in DENY_PATHS
 #   HLX_ST_SOCK     a unix socket inside the opened folder (it must be masked)
+#   HLX_ST_ENV      a .env file in the opened folder (it must be masked); .env.example next to it is not
 #   HLX_ST_SECRET   an environment variable that must NOT reach the sandbox
 
 SECCOMP_PY=/opt/hlx/seccomp.py
@@ -47,6 +49,12 @@ probe_returns() { # probe_returns ERRNO SYSCALL [ARG...]
 	[[ "$(python3 "$SECCOMP_PY" --probe "$@" 2>&1)" == "$expected" ]]
 }
 
+probe_returns_any() { # probe_returns_any "ERRNO|ERRNO" SYSCALL [ARG...]
+	local expected=$1
+	shift
+	[[ "$(python3 "$SECCOMP_PY" --probe "$@" 2>&1)" =~ ^($expected)$ ]]
+}
+
 status_field() { grep -E "^$1:[[:space:]]" /proc/self/status; }
 
 echo "[isolation]"
@@ -67,7 +75,12 @@ allowed "all capabilities are dropped (CapEff is zero)" bash -c "$(declare -f st
 allowed "no_new_privs is set (setuid binaries gain nothing)" bash -c "$(declare -f status_field); status_field NoNewPrivs | grep -q '1\$'"
 allowed "a seccomp filter is active" bash -c "$(declare -f status_field); status_field Seccomp | grep -q '2\$'"
 blocked "creating a nested user namespace fails" unshare --user --map-root-user true
+allowed "unshare(CLONE_NEWUSER) is denied by the filter itself" probe_returns EPERM unshare 0x10000000
+allowed "mount(2) is denied by the filter itself" probe_returns EPERM mount 0 0 0 0 0
 blocked "mounting a filesystem fails" mount -t tmpfs none /mnt
+# shellcheck disable=SC2016 # the variables belong to the inner bash
+allowed "no file descriptors leak in from the host (only 0-2 and the seccomp fd 9)" bash -c '
+	for f in /proc/self/fd/*; do n=${f##*/}; ((n <= 2 || n == 9)) || { echo "leaked fd $n -> $(readlink "$f")"; exit 1; }; done'
 
 echo "[seccomp: denied syscalls fail with EPERM, their normal result is a different error]"
 allowed "an ordinary syscall still works (getpid)" probe_returns OK getpid
@@ -79,8 +92,19 @@ allowed "ioctl TIOCSTI (keystroke injection) is denied" bash -c "exec 3</dev/nul
 allowed "clone(CLONE_NEWUSER) is denied (the flags are invalid, so only the filter can say EPERM)" probe_returns EPERM clone 0x10010000 0 0 0 0
 allowed "other clone flags still reach the kernel (same call without CLONE_NEWUSER: EINVAL)" probe_returns EINVAL clone 0x10000 0 0 0 0
 allowed "personality(READ_IMPLIES_EXEC) is denied" probe_returns EPERM personality 0x400000
+allowed "personality(ADDR_NO_RANDOMIZE) is denied" probe_returns EPERM personality 0x0040000
 allowed "ordinary personality(0) still works" probe_returns OK personality 0
+allowed "link (hardlink) is denied (absent on aarch64, where only linkat exists)" probe_returns_any "EPERM|ABSENT" link
+allowed "linkat (hardlink) is denied" probe_returns EPERM linkat
 allowed "landlock_create_ruleset is denied" probe_returns EPERM landlock_create_ruleset 0 0 1
+allowed "socket(AF_NETLINK) is denied" probe_returns EAFNOSUPPORT socket 16 3 0
+allowed "socket(AF_PACKET) is denied" probe_returns EAFNOSUPPORT socket 17 3 0
+allowed "socket(AF_VSOCK) is denied" probe_returns EAFNOSUPPORT socket 40 1 0
+allowed "socket(AF_UNIX) still works" probe_returns OK socket 1 1 0
+allowed "socket(AF_INET) still works (loopback to local language servers)" probe_returns OK socket 2 1 0
+allowed "socket(AF_INET6) still works" probe_returns OK socket 10 1 0
+allowed "vmsplice is denied" probe_returns EPERM vmsplice -1 0 0 0
+allowed "seccomp(2) is denied (operation 99 would be EINVAL without the filter)" probe_returns EPERM seccomp 99 0 0
 allowed "every name in the seccomp deny list is known to libseccomp (no typos)" python3 "$SECCOMP_PY" --check
 allowed "other ioctls still work (TCGETS on /dev/null gives ENOTTY, not EPERM)" bash -c "exec 3</dev/null; python3 $SECCOMP_PY --probe ioctl 3 0x5401 0 | grep -qx ENOTTY"
 
@@ -89,13 +113,25 @@ allowed "write inside the opened folder" touch "$HLX_ST_SUB/ok"
 blocked "write elsewhere in the repo" touch "$HLX_ST_REPO/escape"
 blocked "modify a tracked file of the repo" bash -c "echo x >> '$HLX_ST_REPO/tracked.txt'"
 blocked "write into the repo's .git" touch "$HLX_ST_REPO/.git/escape"
-blocked "create a .git inside the opened folder (it could carry hooks)" touch "$HLX_ST_SUB/.git/pre-commit"
+allowed "the opened folder's .git placeholder is a directory" test -d "$HLX_ST_SUB/.git" -a ! -L "$HLX_ST_SUB/.git"
+blocked "create a file inside that .git (it could carry hooks)" touch "$HLX_ST_SUB/.git/pre-commit"
 blocked "create a .helix inside the opened folder (it can run commands)" touch "$HLX_ST_SUB/.helix/languages.toml"
+# these fail with EXDEV (separate mounts) before the seccomp filter matters; the probes above test the filter
+blocked "hardlink a read-only repo file into the opened folder" ln "$HLX_ST_REPO/tracked.txt" "$HLX_ST_SUB/via-hardlink"
+blocked "hardlink a .git file into the opened folder" ln "$HLX_ST_REPO/.git/HEAD" "$HLX_ST_SUB/via-git-head"
+allowed "a symlink can be created in the opened folder" ln -s /etc/shadow "$HLX_ST_SUB/shadow-link"
+blocked "that symlink does not expose an unmounted host file" test -e "$HLX_ST_SUB/shadow-link"
 blocked "write to a host directory next to the repo" touch "$HLX_ST_OUTSIDE/escape"
 blocked "read a DENY_PATHS file (it is masked)" test -s "$HLX_ST_DENIED"
 blocked "write a DENY_PATHS file" bash -c "echo x > '$HLX_ST_DENIED'"
 allowed "a unix socket in the opened folder is masked (not a socket here)" test -e "$HLX_ST_SOCK" -a ! -S "$HLX_ST_SOCK"
-blocked "write the helix config" touch "$HOME/.config/helix/escape"
+blocked "read a .env file in the opened folder (it is masked)" test -s "$HLX_ST_ENV"
+allowed ".env.example is not masked" test -s "$HLX_ST_SUB/.env.example"
+if [[ -d "$HOME/.config/helix" ]]; then
+	blocked "write the helix config" touch "$HOME/.config/helix/escape"
+else
+	echo "  skip  write the helix config (no helix config dir mounted)"
+fi
 allowed "the persistent cache dir is writable" bash -c "touch '$HOME/.cache/helix/.selftest' && rm '$HOME/.cache/helix/.selftest'"
 allowed "\$HOME is a throwaway tmpfs (writes succeed but never reach the host)" touch "$HOME/hlx-selftest-marker"
 
