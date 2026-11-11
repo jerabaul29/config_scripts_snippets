@@ -11,6 +11,7 @@
 #   HLX_ST_SUB      the opened folder, the only writable place
 #   HLX_ST_OUTSIDE  a host directory next to the repo that is NOT shared with the sandbox
 #   HLX_ST_DENIED   a file inside the opened folder that is listed in DENY_PATHS
+#   HLX_ST_SOCK     a unix socket inside the opened folder (it must be masked)
 #   HLX_ST_SECRET   an environment variable that must NOT reach the sandbox
 
 SECCOMP_PY=/opt/hlx/seccomp.py
@@ -75,6 +76,12 @@ allowed "perf_event_open is denied" probe_returns EPERM perf_event_open 0 0 0 0 
 allowed "add_key (kernel keyring) is denied" probe_returns EPERM add_key
 allowed "process_vm_readv (read other processes' memory) is denied" probe_returns EPERM process_vm_readv 0 0 0 0 0 0
 allowed "ioctl TIOCSTI (keystroke injection) is denied" bash -c "exec 3</dev/null; python3 $SECCOMP_PY --probe ioctl 3 0x5412 0 | grep -qx EPERM"
+allowed "clone(CLONE_NEWUSER) is denied (the flags are invalid, so only the filter can say EPERM)" probe_returns EPERM clone 0x10010000 0 0 0 0
+allowed "other clone flags still reach the kernel (same call without CLONE_NEWUSER: EINVAL)" probe_returns EINVAL clone 0x10000 0 0 0 0
+allowed "personality(READ_IMPLIES_EXEC) is denied" probe_returns EPERM personality 0x400000
+allowed "ordinary personality(0) still works" probe_returns OK personality 0
+allowed "landlock_create_ruleset is denied" probe_returns EPERM landlock_create_ruleset 0 0 1
+allowed "every name in the seccomp deny list is known to libseccomp (no typos)" python3 "$SECCOMP_PY" --check
 allowed "other ioctls still work (TCGETS on /dev/null gives ENOTTY, not EPERM)" bash -c "exec 3</dev/null; python3 $SECCOMP_PY --probe ioctl 3 0x5401 0 | grep -qx ENOTTY"
 
 echo "[filesystem: the repo is read-only, only the opened folder is writable]"
@@ -87,11 +94,13 @@ blocked "create a .helix inside the opened folder (it can run commands)" touch "
 blocked "write to a host directory next to the repo" touch "$HLX_ST_OUTSIDE/escape"
 blocked "read a DENY_PATHS file (it is masked)" test -s "$HLX_ST_DENIED"
 blocked "write a DENY_PATHS file" bash -c "echo x > '$HLX_ST_DENIED'"
+allowed "a unix socket in the opened folder is masked (not a socket here)" test -e "$HLX_ST_SOCK" -a ! -S "$HLX_ST_SOCK"
 blocked "write the helix config" touch "$HOME/.config/helix/escape"
 allowed "the persistent cache dir is writable" bash -c "touch '$HOME/.cache/helix/.selftest' && rm '$HOME/.cache/helix/.selftest'"
 allowed "\$HOME is a throwaway tmpfs (writes succeed but never reach the host)" touch "$HOME/hlx-selftest-marker"
 
 echo "[git: reading works, changing history does not]"
+allowed "git log works from the opened subfolder (the empty .git placeholder is skipped)" git -C "$HLX_ST_SUB" log --oneline
 allowed "git log works" git -C "$HLX_ST_REPO" log --oneline
 allowed "git diff works (shows the uncommitted change)" bash -c "git -C '$HLX_ST_REPO' diff | grep -q '^+two'"
 blocked "git commit fails (the .git directory is read-only)" \

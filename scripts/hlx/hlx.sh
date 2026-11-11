@@ -16,7 +16,7 @@
 #   Then create ~/.config/hlx/hlx.conf from hlx.conf.example and set HELIX_APPIMAGE.
 #
 # WHAT THE SANDBOX ALLOWS
-#   - no network, no IPC, own PID namespace, new session (blocks TIOCSTI), cleared environment,
+#   - no network, no IPC, own PID namespace, new session (see HLX_NEW_SESSION), cleared environment,
 #     all capabilities dropped, no_new_privs, and a seccomp deny-list (seccomp.py, built with
 #     libseccomp) for kernel calls such as ptrace, mount, io_uring, bpf, keyctl, unshare
 #   - read-only: the extracted AppImage, the helix config, conda/mamba/venv prefixes, EXTRA_RO
@@ -25,7 +25,9 @@
 #       * a new file          -> an empty placeholder file is created and that single file is
 #                                bound; it is removed again on exit if it is still untouched
 #       * a directory         -> that directory
-#       * no path argument    -> the current directory
+#       * no path argument    -> the current directory; if that is a forbidden location
+#                                (e.g. $HOME) you are asked whether to use the scratch
+#                                directory /tmp/hlx_scratchbook (mode 700, kept between runs)
 #     plus EXTRA_RW and the file given to --log. Everything else (including the rest of $HOME)
 #     is invisible. $HOME is an empty tmpfs. Consequently helix can only see/write what was
 #     passed on the command line: opening or saving-as other paths fails by design.
@@ -36,13 +38,17 @@
 #     except `.git`. Reading history and `git diff` work (GIT_OPTIONAL_LOCKS=0 avoids index
 #     writes); commits/staging must be done outside. For worktrees/submodules (`.git` is a
 #     file) the real git dir and the common dir are mounted read-only too. A repo rooted at
-#     $HOME or above is ignored (it would expose all of $HOME).
+#     $HOME or above is ignored (it would expose all of $HOME), and so is a repo whose root
+#     does not contain the target (a hostile `core.worktree` could point anywhere).
 #   - inside a read-write directory, existing `.git` and `.helix` entries (up to
 #     PROTECT_DEPTH levels deep, same filesystem, not inside node_modules; `.git` unless
 #     HLX_GIT_RW=1, which only affects a repo root that is itself opened read-write) and any
-#     DENY_PATHS entries are mounted read-only / masked. A missing root-level `.git`/`.helix`
-#     is covered by an empty read-only placeholder dir that is removed on exit (concurrent
-#     sessions in the same dir share it, so the first one to exit removes it). Missing ones
+#     DENY_PATHS entries are mounted read-only / masked. Unix sockets (ssh-agent, docker, IDE
+#     or fsmonitor sockets...) found there are masked too, since a read-only mount does not
+#     stop connect(). A missing root-level `.git`/`.helix` is covered by an empty read-only
+#     placeholder dir that is removed on exit by the last session using it (sessions share it
+#     through flock files in "<SANDBOX_CACHE_DIR>.locks"; after a kill -9 the empty dir stays
+#     and is cleaned up by the next session). Missing ones
 #     deeper down cannot be pre-protected, so any new one is reported after the session
 #     (review it before running hx or git there). Entries deeper than PROTECT_DEPTH are
 #     neither protected nor reported.
@@ -73,11 +79,16 @@
 #                      extraction is still offered first; --self-test still builds its temp repo)
 #   HLX_NO_SANDBOX=1   run helix directly, no sandbox
 #   HLX_GIT_RW=1       leave the .git of an opened repo root writable
+#   HLX_NEW_SESSION=on|off (default on) bwrap --new-session: the sandbox has no controlling
+#                      terminal. With "off" the sandbox shares yours: Ctrl-Z and terminal resize
+#                      (SIGWINCH) reach helix, at the price of one defence layer (TIOCSTI is
+#                      still denied by seccomp). Try "off" if resizing the terminal does not
+#                      redraw helix.
 #   HLX_SECCOMP=on|off (default on) the seccomp filter is compiled automatically into
 #                      "<SANDBOX_CACHE_DIR>-seccomp-<arch>.bpf" (deliberately outside the
 #                      directory the sandbox can write) and rebuilt whenever seccomp.py,
 #                      libseccomp or SECCOMP_ALLOW changed. Needs python3 + libseccomp2.
-#   HLX_CLIPBOARD=wayland|osc52|off   (default wayland; HLX_NO_CLIPBOARD=1 is the same as off)
+#   HLX_CLIPBOARD=osc52|wayland|off   (default osc52; HLX_NO_CLIPBOARD=1 is the same as off)
 #       wayland: bind only $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY into a private tmpfs runtime dir.
 #                There is no network, so no direct exfiltration, but a Wayland client can do
 #                whatever the compositor lets it: read the clipboard (GNOME: only while
@@ -85,7 +96,9 @@
 #                depending on the compositor, screencopy or virtual input. Best-effort only.
 #       osc52:   no Wayland socket at all. shims/wl-copy sends yanks to the terminal as OSC 52
 #                (needs a terminal that supports it; GNOME Terminal does not), shims/wl-paste
-#                always fails, so paste with the terminal (Ctrl+Shift+V). Recommended.
+#                always fails, so paste with the terminal (Ctrl+Shift+V). The default. If yanking
+#                does nothing, your terminal lacks OSC 52 support: use wayland or a different
+#                terminal.
 #       off:     no system clipboard.
 #
 # NOTES
@@ -95,6 +108,12 @@
 #     in your helix config that needs host services (e.g. tmux sockets) will not work.
 #   - The sandbox is only as good as what you open: treat the contents of a read-write
 #     directory as untrusted after a session (Makefiles, .envrc, scripts, ...).
+#   - Known limits: protection is path based, so a hardlink inside a read-write directory to
+#     a protected file is not masked; the sandbox can rename a directory that contains a
+#     protected .git/.helix and recreate it unprotected (reported after the session, see
+#     above); the sandbox owns the terminal output, so escape sequences that make the
+#     terminal type text back (e.g. xterm title reports) can inject keystrokes into the shell
+#     after helix exits. Use a terminal that does not answer such queries.
 #   - Target: Ubuntu 24.04+, bash >= 4.4. Ubuntu 24.04 blocks unprivileged user namespaces via
 #     AppArmor, so bwrap needs a profile that allows `userns`. It may or may not be installed:
 #       sudo apt install apparmor-profiles apparmor-utils
@@ -108,7 +127,8 @@
 # SELF-TEST
 #   `hlx --self-test` creates a throwaway git repo next to the cache dir, runs selftest.sh
 #   inside the real sandbox configuration (network, hidden files, capabilities, seccomp,
-#   read-only repo, masked paths, git), then verifies on the host that nothing leaked out.
+#   read-only repo, masked paths and sockets, git), then verifies on the host that nothing
+#   leaked out.
 #   Run it after changing this script, the config, bubblewrap or the kernel. Exit status 0 = all ok.
 #
 # NOT IMPLEMENTED YET
@@ -161,6 +181,10 @@ if [[ -f "$HLX_CONFIG" ]]; then
 	# shellcheck source=/dev/null
 	source "$HLX_CONFIG"
 	set -u
+fi
+
+if [[ "${1:-}" == --self-test && "${HLX_NO_SANDBOX:-0}" == 1 ]]; then
+	die "--self-test cannot be combined with HLX_NO_SANDBOX=1"
 fi
 
 [[ -n "$HELIX_APPIMAGE" ]] || die "HELIX_APPIMAGE is not set (set it in the environment or in $HLX_CONFIG)"
@@ -218,7 +242,8 @@ for p in "$HLX_DIR" "$HLX_CONFIG" "$(dirname "$HLX_CONFIG")" "$HELIX_APPIMAGE"; 
 SANDBOX_CACHE_DIR="$(realpath -m -- "$SANDBOX_CACHE_DIR")"
 # the compiled seccomp filter is trusted input for the next run: never writable from inside
 seccomp_bpf="$SANDBOX_CACHE_DIR-seccomp-$(uname -m).bpf"
-deny+=("$seccomp_bpf" "$seccomp_bpf.allow")
+lock_dir="$SANDBOX_CACHE_DIR.locks"
+deny+=("$seccomp_bpf" "$seccomp_bpf.allow" "$lock_dir")
 
 # ---------------------------------------------------------------- self-test setup
 # Builds a throwaway repo and then continues as if `hlx <repo>/sub` had been started; the
@@ -226,7 +251,6 @@ deny+=("$seccomp_bpf" "$seccomp_bpf.allow")
 self_test=0
 if [[ "${1:-}" == --self-test ]]; then
 	[[ $# -eq 1 ]] || die "--self-test takes no other arguments"
-	[[ "${HLX_NO_SANDBOX:-0}" != 1 ]] || die "--self-test cannot be combined with HLX_NO_SANDBOX=1"
 	[[ -f "$HLX_DIR/selftest.sh" ]] || die "missing $HLX_DIR/selftest.sh"
 	command -v git >/dev/null || die "--self-test needs git"
 	self_test=1
@@ -240,15 +264,18 @@ if [[ "${1:-}" == --self-test ]]; then
 	mkdir -p "$HLX_ST_SUB" "$HLX_ST_OUTSIDE"
 	echo canary >"$HLX_ST_OUTSIDE/canary"
 	echo "top secret" >"$HLX_ST_DENIED"
+	HLX_ST_SOCK="$HLX_ST_SUB/agent.sock"
+	python3 -c 'import socket, sys; socket.socket(socket.AF_UNIX).bind(sys.argv[1])' "$HLX_ST_SOCK" ||
+		die "--self-test needs python3 to create a unix socket"
 	echo one >"$HLX_ST_REPO/tracked.txt"
 	git_st=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$HLX_ST_REPO" -c user.name=hlx -c user.email=hlx@localhost)
 	"${git_st[@]}" init -q --template=
 	"${git_st[@]}" add tracked.txt
 	"${git_st[@]}" commit -q -m initial
 	echo two >>"$HLX_ST_REPO/tracked.txt" # uncommitted change for the `git diff` test
-	export HLX_ST_REPO HLX_ST_SUB HLX_ST_OUTSIDE HLX_ST_DENIED
+	export HLX_ST_REPO HLX_ST_SUB HLX_ST_OUTSIDE HLX_ST_DENIED HLX_ST_SOCK
 	export HLX_ST_SECRET=must-not-leak # not in PASS_ENV: has to stay outside
-	PASS_ENV+=(HLX_ST_REPO HLX_ST_SUB HLX_ST_OUTSIDE HLX_ST_DENIED)
+	PASS_ENV+=(HLX_ST_REPO HLX_ST_SUB HLX_ST_OUTSIDE HLX_ST_DENIED HLX_ST_SOCK)
 	deny+=("$HLX_ST_DENIED")
 	set -- "$HLX_ST_SUB"
 fi
@@ -405,7 +432,22 @@ done
 # no path arguments: the cwd is the work dir
 if [[ ${#work_targets[@]} -eq 0 ]]; then
 	workdir="$(realpath "$PWD")"
-	check_writable "$workdir"
+	if ! err="$(check_writable "$workdir" 2>&1)"; then
+		# quick edit from a forbidden place (e.g. $HOME): offer a scratch directory instead
+		scratch=/tmp/hlx_scratchbook
+		printf '%s\n' "$err" >&2
+		[[ -t 0 && -t 2 ]] || exit 1
+		ans=""
+		read -rp "hlx: Open the scratch directory $scratch instead? [y/N] " ans || true
+		[[ "$ans" == [yY] ]] || exit 1
+		# /tmp is shared: never trust a pre-existing path that is not our own real directory
+		if ! mkdir -m 700 -- "$scratch" 2>/dev/null; then
+			[[ -d "$scratch" && ! -L "$scratch" && -O "$scratch" ]] || die "$scratch exists but is not a directory owned by you"
+			chmod 700 -- "$scratch"
+		fi
+		workdir="$(realpath "$scratch")"
+		check_writable "$workdir"
+	fi
 	work_targets+=("$workdir")
 	work_dirs+=("$workdir")
 fi
@@ -439,6 +481,11 @@ if command -v git >/dev/null; then
 		done
 		# a repo at $HOME or above would expose everything; a repo opened as a whole needs nothing extra
 		if [[ "$root" == / ]] || within "$HOME" "$root"; then continue; fi
+		# a hostile core.worktree can make the "root" any directory: it has to contain the target
+		if ! within "$p" "$root"; then
+			warn "ignoring git work tree $root (does not contain $p)"
+			continue
+		fi
 		for q in "${work_dirs[@]}"; do [[ "$q" == "$root" ]] && continue 2; done
 		git_ro+=("$root")
 	done
@@ -469,7 +516,8 @@ on)
 		if [[ -n "$seccomp_allow" ]]; then seccomp_args+=(--allow "$seccomp_allow"); fi
 		mkdir -p "$(dirname "$seccomp_bpf")"
 		python3 "$HLX_DIR/seccomp.py" "${seccomp_args[@]}" || die "building the seccomp filter failed (HLX_SECCOMP=off disables it)"
-		printf '%s\n' "$seccomp_allow" >"$seccomp_bpf.allow"
+		printf '%s\n' "$seccomp_allow" >"$seccomp_bpf.allow.$$"
+		mv -f -- "$seccomp_bpf.allow.$$" "$seccomp_bpf.allow"
 	fi
 	;;
 off) warn "seccomp filter disabled (HLX_SECCOMP=off)" ;;
@@ -477,7 +525,12 @@ off) warn "seccomp filter disabled (HLX_SECCOMP=off)" ;;
 esac
 
 # ---------------------------------------------------------------- bwrap
-bw=(bwrap --unshare-all --die-with-parent --new-session --clearenv --cap-drop ALL)
+bw=(bwrap --unshare-all --die-with-parent --clearenv --cap-drop ALL)
+case "${HLX_NEW_SESSION:-on}" in
+on) bw+=(--new-session) ;;
+off) ;;
+*) die "invalid HLX_NEW_SESSION: ${HLX_NEW_SESSION} (use on or off)" ;;
+esac
 if [[ "$seccomp" == on ]]; then bw+=(--seccomp 9); fi # fd 9 is opened right before the run
 
 for d in /bin /sbin /lib /lib32 /lib64 /libx32; do
@@ -513,7 +566,7 @@ find_protected() {
 	find "$1" -xdev -maxdepth "$PROTECT_DEPTH" -name node_modules -prune -o \( "${protect_names[@]}" \) -print0 -prune 2>/dev/null || true
 }
 declare -A known_protected=() # existing .git/.helix entries, to spot new ones after the session
-placeholder_dirs=()           # empty dirs created at the work dir root, removed again on exit
+lock_dirs=()                  # root-level .git/.helix that are (or will be) empty placeholder dirs
 for d in "${work_dirs[@]}" "${rw_extra[@]}"; do
 	while IFS= read -r -d '' p; do
 		bw+=(--ro-bind "$p" "$p")
@@ -542,14 +595,30 @@ for d in "${git_ro[@]}"; do
 	done
 done
 
-# a missing .helix/.git at a work dir root would otherwise be creatable by the sandbox
+# unix sockets (ssh-agent, docker, ...) are reachable through read-only mounts: mask them
+find_sockets() {
+	find "$1" -xdev -maxdepth "$PROTECT_DEPTH" -name node_modules -prune -o -type s -print0 2>/dev/null || true
+}
+for d in "${git_ro[@]}" "${work_dirs[@]}" "${rw_extra[@]}"; do
+	[[ -d "$d" ]] || continue
+	while IFS= read -r -d '' p; do
+		warn "$p is a socket and is masked inside the sandbox"
+		bw+=(--ro-bind /dev/null "$p")
+	done < <(find_sockets "$d")
+done
+
+# A missing .helix/.git at a work dir root would otherwise be creatable by the sandbox, so an
+# empty placeholder dir is created for it. Concurrent sessions share the placeholder: each
+# holds a shared flock on it, and the last one out (exclusive lock) removes it.
 for d in "${work_dirs[@]}"; do
 	for p in "$d/.helix" "$d/.git"; do
 		[[ "$p" != "$d/.git" || "${HLX_GIT_RW:-0}" != 1 ]] || continue
 		if [[ ! -e "$p" && ! -L "$p" ]]; then
-			placeholder_dirs+=("$p")
+			lock_dirs+=("$p")
 			known_protected["$p"]=1
 			bw+=(--ro-bind "$p" "$p")
+		elif [[ -d "$p" && ! -L "$p" && -z "$(ls -A -- "$p" 2>/dev/null)" ]]; then
+			lock_dirs+=("$p") # possibly another session's placeholder: keep it alive while we run
 		fi
 	done
 done
@@ -564,7 +633,7 @@ for v in LANG LANGUAGE LC_ALL LC_CTYPE LC_MESSAGES LC_COLLATE LC_NUMERIC LC_TIME
 done
 
 # clipboard
-clip="${HLX_CLIPBOARD:-wayland}"
+clip="${HLX_CLIPBOARD:-osc52}"
 if [[ "${HLX_NO_CLIPBOARD:-0}" == 1 ]]; then clip=off; fi
 case "$clip" in
 wayland)
@@ -613,14 +682,22 @@ fi
 
 # ---------------------------------------------------------------- run
 declare -A created=()
+declare -A lock_fd=() # placeholder dir -> fd holding our shared lock on it
+placeholder_lock() { printf '%s/%s' "$lock_dir" "$(printf '%s' "$1" | sha256sum | cut -c1-32)"; }
 # shellcheck disable=SC2317 # invoked via trap
 cleanup() {
-	local f
+	local f fd lf
 	for f in "${!created[@]}"; do
 		# remove placeholders that were never written to
 		if [[ -f "$f" && ! -s "$f" && "$(stat -c %.9Y "$f")" == "${created[$f]}" ]]; then rm -f -- "$f"; fi
 	done
-	for f in "${placeholder_dirs[@]}"; do rmdir -- "$f" 2>/dev/null || true; done
+	for f in "${!lock_fd[@]}"; do
+		fd="${lock_fd[$f]}"
+		exec {fd}>&- # drop our shared lock, then remove the placeholder if nobody else holds one
+		lf="$(placeholder_lock "$f")"
+		# shellcheck disable=SC2016 # $1/$2 belong to the inner sh
+		flock -xn "$lf" sh -c 'if [ -e "$1" ]; then rmdir -- "$2" 2>/dev/null && rm -f -- "$1"; fi' sh "$lf.created" "$f" || true
+	done
 	if [[ -n "${ST_ROOT:-}" ]]; then rm -rf -- "$ST_ROOT"; fi
 }
 trap cleanup EXIT
@@ -632,11 +709,26 @@ for f in "${new_files[@]}"; do
 	touch -- "$f"
 	created["$f"]="$(stat -c %.9Y "$f")"
 done
-for f in "${placeholder_dirs[@]}"; do mkdir -- "$f"; done
+if ((${#lock_dirs[@]})); then
+	command -v flock >/dev/null || die "flock is needed (util-linux)"
+	mkdir -p "$lock_dir"
+	for f in "${lock_dirs[@]}"; do
+		exec {fd}>"$(placeholder_lock "$f")"
+		flock -s "$fd"
+		lock_fd["$f"]="$fd"
+		# the dir may have been removed by another session since the bwrap command was built
+		if mkdir -- "$f" 2>/dev/null; then : >"$(placeholder_lock "$f").created"; fi
+		[[ -d "$f" && ! -L "$f" ]] || die "cannot create the placeholder directory $f"
+	done
+fi
 
 rc=0
 if [[ "$seccomp" == on ]]; then exec 9<"$seccomp_bpf"; fi
-"${bw[@]}" || rc=$?
+# the lock fds stay with this script (they must not leak into the sandbox)
+(
+	for fd in "${lock_fd[@]}"; do exec {fd}>&-; done
+	exec "${bw[@]}"
+) || rc=$?
 
 # .git/.helix entries that did not exist before (deeper than the root) cannot be pre-protected
 for d in "${work_dirs[@]}" "${rw_extra[@]}"; do
@@ -645,6 +737,12 @@ for d in "${work_dirs[@]}" "${rw_extra[@]}"; do
 			printf 'hlx: WARNING: %s was created during the session; it can run commands in unsandboxed hx/git, review or delete it\n' "$p" >&2
 		fi
 	done < <(find_protected "$d")
+done
+
+for f in "${lock_dirs[@]}"; do
+	if [[ -d "$f" && -e "$(placeholder_lock "$f").created" && -n "$(ls -A -- "$f" 2>/dev/null)" ]]; then
+		printf 'hlx: WARNING: %s was meant to stay empty but has content now; review or delete it\n' "$f" >&2
+	fi
 done
 
 if ((self_test)); then

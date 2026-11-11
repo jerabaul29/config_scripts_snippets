@@ -12,4 +12,5 @@ HELIX_APPIMAGE="$HOME/path/to/helix-25.07.1-x86_64.AppImage"
 # DENY_PATHS+=("$HOME/secrets")     # append to the default deny list
 # SECCOMP_ALLOW=(personality)       # syscalls from seccomp.py's deny list to allow again
 # HLX_SECCOMP=on                    # on (default) | off
-# HLX_CLIPBOARD=osc52               # wayland (default) | osc52 | off
+# HLX_CLIPBOARD=wayland             # osc52 (default) | wayland | off
+# HLX_NEW_SESSION=off               # on (default) | off: off lets terminal resize/Ctrl-Z reach helix

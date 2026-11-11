@@ -8,15 +8,21 @@ on Ubuntu because systemd needs it; used through ctypes, so no Python package is
     seccomp.py --probe NAME [ARG...]
         call syscall NAME with integer arguments and print "OK" or the errno name
         (used by `hlx --self-test`; harmless arguments only)
+    seccomp.py --check
+        list DENY entries that libseccomp cannot resolve (typos would otherwise be skipped
+        silently); exit status 1 unless all of them are known-optional on this architecture
 
 Policy: allow everything except DENY, which fails with EPERM. It is a deny-list on top of the
 namespaces and the dropped capabilities: defence in depth, not the primary barrier. libseccomp
 resolves names per architecture, and names unknown to the running kernel headers are skipped.
 
+memfd_create is deliberately not denied: runtimes (JITs, wasm, some language servers) use it and
+anonymous files cannot escape the sandbox anyway.
+
 TODO: go through DENY again from time to time and deny more. New syscalls appear every kernel
 release (the mount API and io_uring came after most deny-lists were written). Candidates:
-socket families (AF_NETLINK, AF_PACKET), memfd_create, landlock_*, seccomp, prctl options,
-pkey_*, and eventually an allow-list built from the real syscall set of helix + language servers.
+socket families (AF_NETLINK, AF_PACKET), seccomp, prctl options, pkey_*, and eventually an
+allow-list built from the real syscall set of helix + language servers.
 """
 
 import ctypes
@@ -33,7 +39,14 @@ perf_event_open bpf userfaultfd io_uring_setup io_uring_enter io_uring_register 
 request_key open_by_handle_at name_to_handle_at lookup_dcookie fanotify_init settimeofday
 clock_settime clock_settime64 clock_adjtime adjtimex sethostname setdomainname mbind get_mempolicy
 set_mempolicy migrate_pages move_pages set_mempolicy_home_node vhangup _sysctl sysfs
+landlock_create_ruleset landlock_add_rule landlock_restrict_self memfd_secret
 """.split()
+# Names that legitimately do not exist on every architecture / libseccomp version (removed
+# legacy calls, x86-only calls, 32-bit-only calls, very new calls); --check tolerates these.
+OPTIONAL = set("""
+create_module get_kernel_syms query_module nfsservctl uselib _sysctl lookup_dcookie modify_ldt
+iopl ioperm umount clock_settime64 quotactl_fd set_mempolicy_home_node
+""".split())
 
 # Argument-dependent rules.
 # clone(2) flags that create namespaces (NEWTIME NEWNS NEWCGROUP NEWUTS NEWIPC NEWUSER NEWPID NEWNET)
@@ -125,13 +138,22 @@ def probe(lib, name, args):
     print("OK" if ret >= 0 else errno.errorcode.get(err, str(err)))
 
 
+def check(lib):
+    unresolved = [n for n in DENY if lib.seccomp_syscall_resolve_name(n.encode()) < 0]
+    for name in unresolved:
+        print(name + (" (optional)" if name in OPTIONAL else ""))
+    sys.exit(1 if any(n not in OPTIONAL for n in unresolved) else 0)
+
+
 def main(argv):
     lib = load_libseccomp()
     if argv[:1] == ["--probe"] and len(argv) >= 2:
         probe(lib, argv[1], argv[2:])
-    elif argv[:1] == ["--out"] and len(argv) in (2, 4):
+    elif argv == ["--check"]:
+        check(lib)
+    elif argv[:1] == ["--out"] and (len(argv) == 2 or (len(argv) == 4 and argv[2] == "--allow")):
         allow = set()
-        if len(argv) == 4 and argv[2] == "--allow":
+        if len(argv) == 4:
             allow = {n for n in argv[3].split(",") if n}
             unknown = allow - set(DENY) - {"personality"}
             if unknown:
