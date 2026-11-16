@@ -3,6 +3,14 @@
 
 HELIX_APPIMAGE="$HOME/path/to/helix-25.07.1-x86_64.AppImage"
 
+# Helix fork (Mitos): comment out the Helix line above, uncomment these two.
+# Remove the SET_ENV line again to go back to plain Helix.
+# A plain line like MITOS_CONFIG_DIR=... in this file does NOT reach the editor: the file is only
+# sourced by hlx.sh, and the sandbox starts with an empty environment. Use SET_ENV.
+# The fork must accept your config files (check with: hlx --health); Helix-only keys make it refuse them.
+# HELIX_APPIMAGE="$HOME/path/to/mitos-nightly-x86_64.AppImage"
+# SET_ENV=("MITOS_CONFIG_DIR=~/.config/helix")  # NAME=VALUE set inside the sandbox; a leading ~ is $HOME
+
 # HELIX_CONFIG_DIR="$HOME/.config/helix"
 # SANDBOX_CACHE_DIR="$HOME/.cache/hlx-sandbox"
 # CONDA_DIRS=("$HOME/conda")        # replaces the default list
@@ -15,5 +23,5 @@ HELIX_APPIMAGE="$HOME/path/to/helix-25.07.1-x86_64.AppImage"
 # HLX_SECCOMP=on                    # on (default) | off
 # HLX_CLIPBOARD=wayland             # osc52 (default) | wayland | off
 # HLX_NEW_SESSION=off               # on (default) | off: off lets terminal resize/Ctrl-Z reach helix
-# HLX_ALLOW_SECRETS=1               # 1: do not mask .env / *.pem / *.key files in opened folders
+# HLX_ALLOW_SECRETS=1               # 1: do not mask .env / *.pem / *.key / other secret files in opened folders
 # HLX_CHECKS=on                     # on (default) | off: startup warnings for old bwrap / link sysctls

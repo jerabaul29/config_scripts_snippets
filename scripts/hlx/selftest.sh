@@ -80,7 +80,7 @@ allowed "mount(2) is denied by the filter itself" probe_returns EPERM mount 0 0 
 blocked "mounting a filesystem fails" mount -t tmpfs none /mnt
 # shellcheck disable=SC2016 # the variables belong to the inner bash
 allowed "no file descriptors leak in from the host (only 0-2 and the seccomp fd 9)" bash -c '
-	for f in /proc/self/fd/*; do n=${f##*/}; ((n <= 2 || n == 9)) || { echo "leaked fd $n -> $(readlink "$f")"; exit 1; }; done'
+	for f in /proc/self/fd/*; do [[ -e $f ]] || continue; n=${f##*/}; ((n <= 2 || n == 9)) || { echo "leaked fd $n -> $(readlink "$f")"; exit 1; }; done'
 
 echo "[seccomp: denied syscalls fail with EPERM, their normal result is a different error]"
 allowed "an ordinary syscall still works (getpid)" probe_returns OK getpid
@@ -139,6 +139,9 @@ echo "[git: reading works, changing history does not]"
 allowed "git log works from the opened subfolder (the empty .git placeholder is skipped)" git -C "$HLX_ST_SUB" log --oneline
 allowed "git log works" git -C "$HLX_ST_REPO" log --oneline
 allowed "git diff works (shows the uncommitted change)" bash -c "git -C '$HLX_ST_REPO' diff | grep -q '^+two'"
+allowed "git remote still works" bash -c "git -C '$HLX_ST_REPO' remote | grep -qx origin"
+blocked "credentials embedded in a remote URL are not readable (.git/config is sanitized)" \
+	bash -c "git -C '$HLX_ST_REPO' config remote.origin.url | grep -q must-not-leak"
 blocked "git commit fails (the .git directory is read-only)" \
 	git -C "$HLX_ST_REPO" -c user.name=hlx -c user.email=hlx@localhost commit --allow-empty -q -m x
 

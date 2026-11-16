@@ -76,6 +76,8 @@ CLONE_FLAGS_ARG = 1 if platform.machine() == "s390x" else 0
 CLONE_NEW_FLAGS = [0x80, 0x20000, 0x2000000, 0x4000000, 0x8000000, 0x10000000, 0x20000000, 0x40000000]
 # ioctls that inject keystrokes / redirect the console
 BAD_IOCTLS = {"TIOCSTI": 0x5412, "TIOCCONS": 0x541D, "TIOCLINUX": 0x541C}
+# these numbers are the asm-generic ones; powerpc, mips, sparc and alpha use different values
+GENERIC_IOCTL_MACHINES = {"x86_64", "i386", "i686", "aarch64", "arm64", "armv7l", "armv8l", "riscv64", "s390x"}
 # personality(2) flags that weaken exploit mitigations: ADDR_NO_RANDOMIZE (turns ASLR off),
 # MMAP_PAGE_ZERO, ADDR_COMPAT_LAYOUT, READ_IMPLIES_EXEC
 # (libseccomp allows one comparison per argument per rule, so the 0xffffffff "query" call, which
@@ -150,8 +152,12 @@ def build(lib, out_path, allow):
     # clone3 passes its flags in a user struct that seccomp cannot inspect; ENOSYS makes glibc
     # fall back to clone(2), which is filtered above
     add(SCMP_ACT_ERRNO(errno.ENOSYS), "clone3")
-    for request in BAD_IOCTLS.values():
-        add(eperm, "ioctl", (1, SCMP_CMP_MASKED_EQ, 0xFFFFFFFF, request))
+    if platform.machine() in GENERIC_IOCTL_MACHINES:
+        for request in BAD_IOCTLS.values():
+            add(eperm, "ioctl", (1, SCMP_CMP_MASKED_EQ, 0xFFFFFFFF, request))
+    else:
+        print(f"seccomp.py: warning: ioctl numbers unknown for {platform.machine()}, "
+              "TIOCSTI is not filtered (keep HLX_NEW_SESSION=on)", file=sys.stderr)
     if "personality" not in allow:
         for flag in PERSONALITY_BAD_FLAGS:
             add(eperm, "personality", (0, SCMP_CMP_MASKED_EQ, flag, flag))

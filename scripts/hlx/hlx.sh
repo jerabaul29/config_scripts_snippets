@@ -5,7 +5,7 @@
 # USAGE
 #   hlx [hx flags] [path[:line[:col]]]...
 #   hlx --self-test            check that the sandbox really blocks what it should (see below)
-#   hlx --clean-cache          empty SANDBOX_CACHE_DIR (LSP indexes etc.); refuses while a session runs.
+#   hlx --clean-cache          empty SANDBOX_CACHE_DIR (the per-project LSP caches); refuses while a session runs.
 #                              Use it after opening an untrusted project or when the cache grows
 #   HLX_NO_SANDBOX=1 hlx ...   run unsandboxed (needed e.g. for `--grammar fetch`, or to edit
 #                              protected files such as the helix config itself)
@@ -38,11 +38,14 @@
 #     point out of the opened folders (see LINKS). Nothing is reported for Makefiles or
 #     scripts.
 #   - Secrets in the opened folder are hidden from the sandbox, not made harmless: .env,
-#     .env.* and *.pem/*.key files are masked (HLX_ALLOW_SECRETS=1 turns that off), but a
-#     secret under another name is readable and can leave through the clipboard or the
-#     terminal.
+#     .env.*, *.pem/*.key/*.p12/*.pfx/*.kdbx/*.tfvars, .git-credentials, .netrc, .npmrc, .pypirc,
+#     .pgpass, .htpasswd, credentials.json and id_* private keys are masked (HLX_ALLOW_SECRETS=1
+#     turns that off), but a secret under another name is readable and can leave through the
+#     clipboard or the terminal. Credentials embedded in remote URLs of a .git/config are
+#     stripped from a copy bound over the real file (the sandbox sees the sanitized one).
 #   - The persistent SANDBOX_CACHE_DIR: a compromise can survive there between sandboxed
-#     runs (never executed unsandboxed). Reset it with `hlx --clean-cache`.
+#     runs of the same work dir (each work dir gets its own subdirectory, so projects cannot
+#     reach each other's cache; never executed unsandboxed). Reset it with `hlx --clean-cache`.
 #   Out of scope: kernel, bubblewrap and libseccomp vulnerabilities (the seccomp filter is
 #   a deny-list, defence in depth only), and resource exhaustion (see NOT IMPLEMENTED).
 #   Hardening that depends on the host (checked at startup, see HLX_CHECKS):
@@ -98,7 +101,8 @@
 #       * no path argument    -> the current directory; if that is a forbidden location
 #                                (e.g. $HOME) you are asked whether to use the scratch
 #                                directory /tmp/hlx_scratchbook (mode 700, kept between runs)
-#     plus EXTRA_RW and the file given to --log. Everything else (including the rest of $HOME)
+#     plus EXTRA_RW, the file given to --log and a per-work-dir cache (mounted at ~/.cache/helix).
+#     Everything else (including the rest of $HOME)
 #     is invisible. $HOME is an empty tmpfs. Consequently helix can only see/write what was
 #     passed on the command line: opening or saving-as other paths fails by design.
 #   - git repositories: if a target lies inside a git repo (found with
@@ -106,7 +110,8 @@
 #     READ-ONLY, and only the targets you opened stay read-write on top of it. So started in a
 #     subdir, only that subdir is writable; started at the repo root, the root is writable
 #     except `.git`. Reading history and `git diff` work (GIT_OPTIONAL_LOCKS=0 avoids index
-#     writes); commits/staging must be done outside. For worktrees/submodules (`.git` is a
+#     writes); commits/staging must be done outside. Credentials embedded in remote URLs are
+#     removed from the .git/config the sandbox sees (not from submodule configs below .git/modules). For worktrees/submodules (`.git` is a
 #     file) the real git dir and the common dir are mounted read-only too, but only if that
 #     path looks like git metadata, is not a system location, and does not contain a path
 #     that is bound read-write (that mount is applied later and would hide it). Announced
@@ -147,12 +152,20 @@
 # hardcoded: HELIX_APPIMAGE has to be set.
 #   HELIX_APPIMAGE     path of the Helix AppImage (required)
 #   HELIX_CONFIG_DIR   helix config dir, mounted read-only at ~/.config/helix
-#   SANDBOX_CACHE_DIR  the only persistent writable dir (mounted at ~/.cache/helix)
+#   SANDBOX_CACHE_DIR  root of the persistent caches; each work dir gets its own subdirectory, mounted
+#                      writable at ~/.cache/helix (the only persistent writable dir)
 #   CONDA_DIRS         read-only conda/mamba roots; active CONDA_PREFIX, MAMBA_ROOT_PREFIX and
 #                      VIRTUAL_ENV are added automatically
 #   EXTRA_RO / EXTRA_RW  extra read-only / read-write paths (e.g. language servers, caches)
 #   DENY_PATHS         never writable, masked inside read-write dirs (credentials, shell rc, ...)
 #   PASS_ENV           extra environment variable names to pass through
+#   SET_ENV            NAME=VALUE entries set inside the sandbox (also with HLX_NO_SANDBOX=1), e.g.
+#                      for a Helix fork: SET_ENV=("MITOS_CONFIG_DIR=~/.config/helix"). Variables
+#                      assigned directly in hlx.conf are NOT passed on; use SET_ENV (or PASS_ENV
+#                      for ones already set in your shell). A leading
+#                      "~/" in VALUE means the sandbox $HOME; the helix config dir is mounted
+#                      there (read-only). Point HELIX_APPIMAGE at the fork's AppImage, and use a
+#                      separate config per editor: HLX_CONFIG=~/.config/hlx/mitos.conf hlx ...
 #   PROTECT_DEPTH      how deep to look for .git/.helix inside read-write directories
 #                      (positive integer, default 4)
 #   SECCOMP_ALLOW      syscall names from the seccomp.py deny list to allow after all, plus
@@ -168,8 +181,8 @@
 #                      bubblewrap older than 0.12.0, or fs.protected_hardlinks /
 #                      fs.protected_symlinks not 1. Warnings only, nothing is blocked.
 #   HLX_NO_SANDBOX=1   run helix directly, no sandbox
-#   HLX_ALLOW_SECRETS=1  do not mask .env, .env.* (not .example/.sample/.template/.dist) and
-#                      *.pem/*.key files inside opened folders. A file named on the command
+#   HLX_ALLOW_SECRETS=1  do not mask the secret files listed under THREAT MODEL (not
+#                      .example/.sample/.template/.dist) inside opened folders. A file named on the command
 #                      line is never masked. Not allowed with --self-test.
 #   HLX_GIT_RW=1       leave the .git of an opened repo root writable
 #   HLX_NEW_SESSION=on|off (default on) bwrap --new-session: the sandbox has no controlling
@@ -240,8 +253,7 @@
 #     tested without a working bwrap, so it is left out rather than shipped untested.
 #   - Landlock REFER, only if denying link/linkat breaks a real tool (see LINKS)
 #   - seccomp: more denied calls / an allow-list (see the TODO in seccomp.py)
-#   - masking of secrets under other names (credentials.json, *.tfvars, ...) and of secrets
-#     deeper than PROTECT_DEPTH
+#   - masking of secrets under other names and of secrets deeper than PROTECT_DEPTH
 #   - resource limits via systemd-run --user / cgroups
 
 set -euo pipefail
@@ -283,6 +295,7 @@ CONDA_DIRS=("$HOME/conda" "$HOME/miniconda3" "$HOME/miniforge3" "$HOME/mambaforg
 EXTRA_RO=()
 EXTRA_RW=()
 PASS_ENV=()
+SET_ENV=()
 SECCOMP_ALLOW=()
 PROTECT_DEPTH="${PROTECT_DEPTH:-4}"
 DENY_PATHS=(
@@ -298,6 +311,14 @@ DENY_PATHS=(
 	"$HOME/.npmrc" "$HOME/.pypirc" "$HOME/.config/pip" "$HOME/.cargo/config" "$HOME/.cargo/config.toml"
 	"$HOME/.cargo/credentials" "$HOME/.cargo/credentials.toml"
 	"$HOME/.config/autostart" "$HOME/.config/systemd" "$HOME/.local/bin"
+	"$HOME/.local/share/systemd" "$HOME/.local/share/applications"
+	"$HOME/.vimrc" "$HOME/.vim" "$HOME/.config/nvim" "$HOME/.emacs" "$HOME/.emacs.d"
+	"$HOME/.tmux.conf" "$HOME/.config/tmux"
+	"$HOME/.vscode" "$HOME/.config/Code" "$HOME/.config/VSCodium"
+	"$HOME/.thunderbird" "$HOME/.config/BraveSoftware" "$HOME/.config/Slack"
+	"$HOME/.config/rclone" "$HOME/.config/op" "$HOME/.config/doctl" "$HOME/.oci"
+	"$HOME/.gem/credentials" "$HOME/.m2/settings.xml" "$HOME/.gradle/gradle.properties"
+	"$HOME/.terraform.d" "$HOME/.config/hub" "$HOME/.git-credentials" "$HOME/.pgpass"
 )
 
 if [[ -f "$HLX_CONFIG" ]]; then
@@ -318,6 +339,24 @@ fi
 for v in "${PASS_ENV[@]}"; do
 	[[ "$v" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || die "invalid variable name in PASS_ENV: $v"
 done
+for v in "${SET_ENV[@]}"; do
+	[[ "$v" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]] || die "invalid entry in SET_ENV (expected NAME=VALUE): $v"
+done
+# a leading ~ in a value becomes $HOME (the sandbox $HOME is a tmpfs at the same path)
+set_env_names=()
+set_env_values=()
+for v in "${SET_ENV[@]}"; do
+	set_env_names+=("${v%%=*}")
+	val="${v#*=}"
+	# shellcheck disable=SC2088 # a literal ~ is matched on purpose
+	if [[ "$val" == "~" || "$val" == "~/"* ]]; then val="$HOME${val:1}"; fi
+	set_env_values+=("$val")
+done
+# the fork's tools read these from the environment, with or without the sandbox
+export_set_env() {
+	local i
+	for i in "${!set_env_names[@]}"; do export "${set_env_names[i]}=${set_env_values[i]}"; done
+}
 
 if [[ "${1:-}" == --clean-cache ]]; then
 	[[ $# -eq 1 ]] || die "--clean-cache takes no other arguments"
@@ -370,10 +409,14 @@ fi
 
 # informational flags need no sandbox, but only when that is the request itself
 case "${1:-}" in
--V | --version | -h | --help) exec "$EXTRACT_DIR/AppRun" "$@" ;;
+-V | --version | -h | --help)
+	export_set_env
+	exec "$EXTRACT_DIR/AppRun" "$@"
+	;;
 esac
 
 if [[ "${HLX_NO_SANDBOX:-0}" == 1 ]]; then
+	export_set_env
 	exec "$EXTRACT_DIR/AppRun" "$@"
 fi
 
@@ -459,6 +502,7 @@ if [[ "${1:-}" == --self-test ]]; then
 	echo one >"$HLX_ST_REPO/tracked.txt"
 	git_st=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$HLX_ST_REPO" -c user.name=hlx -c user.email=hlx@localhost)
 	"${git_st[@]}" init -q --template=
+	"${git_st[@]}" remote add origin https://user:must-not-leak@example.invalid/x.git
 	"${git_st[@]}" add tracked.txt
 	"${git_st[@]}" commit -q -m initial
 	echo two >>"$HLX_ST_REPO/tracked.txt" # uncommitted change for the `git diff` test
@@ -661,7 +705,7 @@ done
 
 # no path arguments: the cwd is the work dir
 if [[ ${#work_targets[@]} -eq 0 ]]; then
-	workdir="$(realpath "$PWD")"
+	workdir="$(realpath "$PWD" 2>/dev/null)" || die "the current directory no longer exists"
 	if ! err="$(check_writable "$workdir" 2>&1)"; then
 		# quick edit from a forbidden place (e.g. $HOME): offer a scratch directory instead
 		scratch=/tmp/hlx_scratchbook
@@ -695,7 +739,8 @@ looks_like_git_dir() {
 	[[ -d "$1/objects" || -d "$1/refs" || -f "$1/commondir" || -e "$1/config" ]]
 }
 git_discover() {
-	env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 GIT_OPTIONAL_LOCKS=0 \
+	env -u GIT_DIR -u GIT_WORK_TREE -u GIT_COMMON_DIR -u GIT_INDEX_FILE -u GIT_OBJECT_DIRECTORY -u GIT_NAMESPACE \
+		GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 GIT_OPTIONAL_LOCKS=0 \
 		timeout 10 git -c safe.directory='*' -c core.fsmonitor=false \
 		-c core.hooksPath=/dev/null -c protocol.file.allow=never "$@"
 }
@@ -813,6 +858,9 @@ done
 # tmpfs $HOME must precede every bind located under it
 bw+=(--tmpfs "$HOME")
 
+# one cache per work dir: a compromise in one project cannot plant or read files for another
+cache_proj="$SANDBOX_CACHE_DIR/projects/$(printf '%s' "$workdir" | sha256sum | cut -c1-24)"
+
 # whole repos read-only first, so the targets below can be re-bound read-write inside them
 for p in "${git_ro[@]}"; do bw+=(--ro-bind "$p" "$p"); done
 
@@ -826,7 +874,7 @@ for p in "${gitdir_ro[@]}"; do bw+=(--ro-bind-try "$p" "$p"); done
 bw+=(--ro-bind "$EXTRACT_DIR" "$EXTRACT_DIR")
 bw+=(--ro-bind-try "$HELIX_CONFIG_DIR" "$HOME/.config/helix")
 for p in "${ro_mounts[@]}" "${ro_files[@]}"; do bw+=(--ro-bind-try "$p" "$p"); done
-bw+=(--bind "$SANDBOX_CACHE_DIR" "$HOME/.cache/helix")
+bw+=(--bind "$cache_proj" "$HOME/.cache/helix")
 
 # inside read-write dirs: .helix / .git read-only (and say so if a protected path is inside)
 protect_names=(-name .helix)
@@ -864,6 +912,24 @@ for d in "${git_ro[@]}"; do
 	done
 done
 
+# Remote URLs may embed credentials (https://user:token@host/...). .git is readable inside the
+# sandbox, so each .git/config containing such a URL is replaced by a sanitized copy (userinfo
+# removed), bound read-only on top. The copies are written after the trap is set (see "run").
+san_src=()
+mask_git_credentials() { # mask_git_credentials GITDIR
+	local cfg="$1/config"
+	[[ -f "$cfg" && ! -L "$cfg" ]] || return 0
+	grep -Eq '://[^/@[:space:]]+@' "$cfg" 2>/dev/null || return 0
+	warn "$cfg has credentials in a URL; a sanitized copy is used inside the sandbox"
+	bw+=(--ro-bind "$SANDBOX_CACHE_DIR.cfg.$$/${#san_src[@]}" "$cfg")
+	san_src+=("$cfg")
+}
+for d in "${git_ro[@]}"; do mask_git_credentials "$d/.git"; done
+for d in "${gitdir_ro[@]}"; do mask_git_credentials "$d"; done
+for p in "${!known_protected[@]}"; do
+	if [[ "$p" == */.git && -d "$p" && ! -L "$p" ]]; then mask_git_credentials "$p"; fi
+done
+
 # unix sockets (ssh-agent, docker, ...) are reachable through read-only mounts: mask them
 find_sockets() {
 	find "$1" -xdev -maxdepth "$PROTECT_DEPTH" -name node_modules -prune -o -type s -print0 2>/dev/null || true
@@ -876,12 +942,15 @@ for d in "${git_ro[@]}" "${work_dirs[@]}" "${rw_extra[@]}"; do
 	done < <(find_sockets "$d")
 done
 
-# Secret files (.env, .env.*, *.pem, *.key; not *.example/.sample/.template/.dist) are masked like
+# Secret files (the names listed under THREAT MODEL; not *.example/.sample/.template/.dist) are masked like
 # sockets: a compromised language server could read them and yank them out. A file named on the
 # command line is opened as asked, not masked. HLX_ALLOW_SECRETS=1 turns this off.
 find_secrets() {
 	find "$1" -xdev -maxdepth "$PROTECT_DEPTH" -name node_modules -prune -o -type f \
-		\( -name .env -o -name '.env.*' -o -name '*.pem' -o -name '*.key' \) \
+		\( -name .env -o -name '.env.*' -o -name '*.pem' -o -name '*.key' -o -name '*.p12' -o -name '*.pfx' \
+		-o -name '*.kdbx' -o -name '*.tfvars' -o -name .git-credentials -o -name .netrc -o -name .npmrc \
+		-o -name .pypirc -o -name .pgpass -o -name .htpasswd -o -name credentials.json \
+		-o -name id_rsa -o -name id_dsa -o -name id_ecdsa -o -name id_ed25519 \) \
 		! \( -name '*.example' -o -name '*.sample' -o -name '*.template' -o -name '*.dist' \) -print0 2>/dev/null || true
 }
 if [[ "${HLX_ALLOW_SECRETS:-0}" != 1 ]]; then
@@ -917,13 +986,25 @@ for d in "${work_dirs[@]}"; do
 done
 
 # environment
-sandbox_path="$PATH"
+# empty or relative PATH entries would resolve inside the writable project: drop them
+clean_path() {
+	local -a parts
+	local e out=""
+	IFS=: read -ra parts <<<"$1"
+	for e in "${parts[@]}"; do
+		if [[ "$e" == /* ]]; then out+="${out:+:}$e"; fi
+	done
+	printf '%s' "${out:-/usr/local/bin:/usr/bin:/bin}"
+}
+sandbox_path="$(clean_path "$PATH")"
 bw+=(--setenv HOME "$HOME" --setenv TERM "${TERM:-xterm-256color}")
 bw+=(--setenv GIT_OPTIONAL_LOCKS 0)
 for v in LANG LANGUAGE LC_ALL LC_CTYPE LC_MESSAGES LC_COLLATE LC_NUMERIC LC_TIME LC_MONETARY LC_PAPER COLORTERM NO_COLOR USER LOGNAME \
 	CONDA_PREFIX CONDA_DEFAULT_ENV MAMBA_ROOT_PREFIX VIRTUAL_ENV "${PASS_ENV[@]}"; do
 	if [[ -n "${!v:-}" ]]; then bw+=(--setenv "$v" "${!v}"); fi
 done
+
+for i in "${!set_env_names[@]}"; do bw+=(--setenv "${set_env_names[i]}" "${set_env_values[i]}"); done
 
 # clipboard
 clip="${HLX_CLIPBOARD:-osc52}"
@@ -942,7 +1023,7 @@ osc52)
 	# helix picks its wayland provider when WAYLAND_DISPLAY is set and wl-copy/wl-paste exist
 	[[ -x "$HLX_DIR/shims/wl-copy" && -x "$HLX_DIR/shims/wl-paste" ]] || die "missing clipboard shims in $HLX_DIR/shims"
 	bw+=(--ro-bind "$HLX_DIR/shims" /opt/hlx-shims --setenv WAYLAND_DISPLAY wayland-hlx-osc52)
-	sandbox_path="/opt/hlx-shims:$PATH"
+	sandbox_path="/opt/hlx-shims:$sandbox_path"
 	;;
 off) ;;
 *) die "invalid HLX_CLIPBOARD: $clip (use wayland, osc52 or off)" ;;
@@ -982,14 +1063,23 @@ cleanup() {
 		# shellcheck disable=SC2016 # $1/$2 belong to the inner sh
 		flock -xn "$lf" sh -c 'if [ -e "$1" ]; then rmdir -- "$2" 2>/dev/null; rm -f -- "$1"; fi' sh "$lf.created" "$f" || true
 	done
-	if [[ -n "${ST_ROOT:-}" ]]; then rm -rf -- "$ST_ROOT"; fi
+	if [[ -n "${ST_ROOT:-}" ]]; then rm -rf -- "$ST_ROOT" "$cache_proj"; fi
+	if [[ -n "${san_dir:-}" ]]; then rm -rf -- "$san_dir"; fi
 }
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 trap 'exit 129' HUP
 
-(umask 077 && mkdir -p "$SANDBOX_CACHE_DIR" && : >>"$SANDBOX_CACHE_DIR/.hlx-cache")
+(umask 077 && mkdir -p "$SANDBOX_CACHE_DIR" && : >>"$SANDBOX_CACHE_DIR/.hlx-cache" && mkdir -p "$cache_proj")
+if ((${#san_src[@]})); then
+	san_dir="$SANDBOX_CACHE_DIR.cfg.$$"
+	rm -rf -- "$san_dir" # leftover of a killed session that had the same pid
+	(umask 077 && mkdir -- "$san_dir") || die "cannot create $san_dir"
+	for i in "${!san_src[@]}"; do
+		sed -E 's#(://)[^/@[:space:]]+@#\1#' -- "${san_src[i]}" >"$san_dir/$i" || die "cannot sanitize ${san_src[i]}"
+	done
+fi
 # shared lock for the whole session: --clean-cache refuses to run while one is held
 if command -v flock >/dev/null; then
 	(umask 077 && mkdir -p "$lock_dir")
